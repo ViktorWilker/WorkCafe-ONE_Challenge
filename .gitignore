@@ -24,3 +24,5 @@ env/
 .idea/
 .vscode/
 *.log
+references/
+web/references/

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkCafe - Internal AI Agent</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    if (localStorage.getItem('workcafe-theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="#" class="logo text-title">WorkCafe.</a>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-target="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          Dashboard
+        </button>
+        <button class="nav-item" data-target="chat">
+          <i data-lucide="message-square"></i>
+          Chat
+        </button>
+        <button class="nav-item" data-target="documents">
+          <i data-lucide="folder-open"></i>
+          Documents
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Dashboard View -->
+      <section id="dashboard" class="view active">
+        <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <p class="text-label" style="margin-bottom: 0.5rem;">Visão Geral</p>
+            <h1 class="text-title char-reveal">Performance & Insights</h1>
+          </div>
+          <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle Dark Mode">
+            <i data-lucide="moon" id="themeIcon"></i>
+          </button>
+        </div>
+
+        <div class="bento-grid">
+          <!-- Top Row: KPIs -->
+          <div class="card col-span-4">
+            <div class="card__header">
+              <h3 class="text-card-title">Faturamento Mensal</h3>
+            </div>
+            <div class="card__content">
+              <div style="display: flex; align-items: baseline;">
+                <span class="text-kpi">R$ <span class="counter" data-target="261595">0</span>,75</span>
+              </div>
+              <p class="text-body" style="margin-top: 0.5rem;">
+                <span class="delta">+8%</span> vs mês anterior
+              </p>
+            </div>
+          </div>
+
+          <div class="card col-span-4">
+            <div class="card__header">
+              <h3 class="text-card-title">Produto Top</h3>
+            </div>
+            <div class="card__content">
+              <span class="text-kpi">Espresso</span>
+              <p class="text-body" style="margin-top: 0.5rem;">Margem: 75,3%</p>
+            </div>
+          </div>
+
+          <div class="card col-span-4">
+            <div class="card__header">
+              <h3 class="text-card-title">Docs Indexados</h3>
+            </div>
+            <div class="card__content">
+              <span class="text-kpi counter" data-target="205">0</span>
+              <p class="text-body" style="margin-top: 0.5rem;">documentos na base</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="dashboard-tabs">
+          <button class="dash-tab active" data-tab="faturamento">Faturamento</button>
+          <button class="dash-tab" data-tab="margem">Margem</button>
+          <button class="dash-tab" data-tab="estoque">Estoque</button>
+          <button class="dash-tab" data-tab="fornecedores">Fornecedores</button>
+          <button class="dash-tab" data-tab="basedocs">Base de Docs</button>
+          <button class="dash-tab tab-feature" data-tab="correlacoes">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px; margin-right: 0.4rem;"></i>
+            Correlações
+          </button>
+        </div>
+
+        <!-- Dashboard Area -->
+        <div class="dashboard-area">
+          <!-- Faturamento -->
+          <div class="dash-pane active" id="pane-faturamento">
+            <div class="pane-split">
+              <div class="pane-split-left" style="flex: 2;">
+                <h3 class="text-card-title pane-title">Faturamento por Mês</h3>
+                <div class="pane-content">
+                  <canvas id="lineChart" style="width: 100%; height: 100%;"></canvas>
+                </div>
+              </div>
+              <div class="pane-split-right" style="flex: 1; display: flex; flex-direction: column; gap: 2.5rem; justify-content: center;">
+                <!-- Total YTD -->
+                <div>
+                  <h3 class="text-card-title pane-title">Faturamento Total (Ano)</h3>
+                  <div style="margin-top: 1rem;">
+                    <span class="text-kpi" style="font-size: 2.5rem;">R$ 2.4M</span>
+                    <span class="delta" style="margin-left: 0.75rem;">+12.4% vs ano anterior</span>
+                  </div>
+                </div>
+                
+                <!-- Ticket Médio -->
+                <div>
+                  <h3 class="text-card-title pane-title">Ticket Médio</h3>
+                  <div style="margin-top: 1rem;">
+                    <span class="text-kpi" style="font-size: 2.5rem;">R$ 42,50</span>
+                    <span class="delta" style="margin-left: 0.75rem;">+5.4% vs mês anterior</span>
+                  </div>
+                  <div style="height: 60px; margin-top: 1.5rem;">
+                    <canvas id="miniSparkline" style="width: 100%; height: 100%;"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Margem -->
+          <div class="dash-pane" id="pane-margem">
+            <div class="pane-split">
+              <div class="pane-split-left" style="flex: 1.5;">
+                <h3 class="text-card-title pane-title">Margem Bruta vs Líquida por Categoria</h3>
+                <div class="pane-content">
+                  <canvas id="barChartMargem" style="width: 100%; height: 100%;"></canvas>
+                </div>
+              </div>
+              <div class="pane-split-right" style="flex: 1; display: flex; flex-direction: column;">
+                <h3 class="text-card-title pane-title">Margem de Contribuição</h3>
+                <div class="pane-content" style="display: flex; flex-direction: column; margin-top: 1rem;">
+                  <div style="flex: 1; min-height: 220px; position: relative;">
+                    <canvas id="donutChartContrib" style="width: 100%; height: 100%;"></canvas>
+                  </div>
+                  <div id="donutLegendContrib" style="margin-top: 1.5rem;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Estoque -->
+          <div class="dash-pane" id="pane-estoque">
+            <div class="pane-split">
+              <div class="pane-split-left">
+                <h3 class="text-card-title pane-title">Estoque Crítico vs Mínimo</h3>
+                <div class="pane-content">
+                  <canvas id="barChartEstoque" style="width: 100%; height: 100%;"></canvas>
+                </div>
+              </div>
+              <div class="pane-split-right">
+                <h3 class="text-card-title pane-title">Abaixo do Mínimo</h3>
+                <ul class="alert-list">
+                  <li class="alert-item">
+                    <span class="alert-dot"></span>
+                    <div class="alert-info">
+                      <span class="alert-name">Leite Aveia</span>
+                      <span class="alert-desc">Atual: 15% | Mín: 20%</span>
+                    </div>
+                  </li>
+                  <li class="alert-item">
+                    <span class="alert-dot"></span>
+                    <div class="alert-info">
+                      <span class="alert-name">Copo Descartável M</span>
+                      <span class="alert-desc">Atual: 5% | Mín: 15%</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Fornecedores -->
+          <div class="dash-pane" id="pane-fornecedores">
+            <div class="node-graph-placeholder">
+              <i data-lucide="network" class="node-icon"></i>
+              <h3 class="text-card-title">Rede de Fornecedores</h3>
+              <p class="text-body text-center" style="margin-bottom: 1.5rem;">Visualização interativa em breve</p>
+              <button class="btn btn--terracotta" disabled style="opacity: 0.5; cursor: not-allowed;">Ver Rede</button>
+            </div>
+          </div>
+          
+          <!-- Base de Docs -->
+          <div class="dash-pane" id="pane-basedocs">
+            <h3 class="text-card-title pane-title">Distribuição por Categoria</h3>
+            <div class="pane-content donut-layout">
+              <div class="donut-canvas-container">
+                <canvas id="donutChartDocs" width="300" height="300"></canvas>
+              </div>
+              <div class="donut-legend" id="donutLegend">
+                <!-- populated by JS -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Correlações -->
+          <div class="dash-pane" id="pane-correlacoes" style="padding: 1.5rem 2rem;">
+            <div class="corr-top">
+              <div class="corr-select-group">
+                <label class="text-label" for="corrSelectA">Selecionar dado A</label>
+                <select id="corrSelectA" class="corr-select font-serif">
+                  <option value="faturamento" selected>Faturamento</option>
+                  <option value="margem">Margem</option>
+                  <option value="estoque">Estoque</option>
+                  <option value="fornecedores">Fornecedores</option>
+                  <option value="basedocs">Base de Docs</option>
+                </select>
+              </div>
+              <span class="corr-vs font-serif text-stone-500">vs</span>
+              <div class="corr-select-group">
+                <label class="text-label" for="corrSelectB">Selecionar dado B</label>
+                <select id="corrSelectB" class="corr-select font-serif">
+                  <option value="faturamento">Faturamento</option>
+                  <option value="margem" selected>Margem</option>
+                  <option value="estoque">Estoque</option>
+                  <option value="fornecedores">Fornecedores</option>
+                  <option value="basedocs">Base de Docs</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="corr-middle">
+              <div class="corr-chart-container" id="corrChartA"></div>
+              <div class="corr-divider"></div>
+              <div class="corr-chart-container" id="corrChartB"></div>
+            </div>
+
+            <div class="corr-bottom">
+              <div class="card corr-analysis-card">
+                <button class="btn btn--terracotta" id="btnAnalyzeCorr">
+                  <i data-lucide="sparkles" style="margin-right: 0.5rem; width: 18px; height: 18px;"></i>
+                  Analisar Correlação
+                </button>
+                <div class="corr-analysis-text view" id="corrAnalysisText" style="display: block; opacity: 1;">
+                  <p style="font-style: italic; color: var(--color-stone-500);" class="font-serif">
+                    Selecione dois conjuntos de dados e clique em Analisar para ver a correlação.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat View -->
+      <section id="chat" class="view">
+        <div class="view-header">
+          <p class="text-label" style="margin-bottom: 0.5rem;">Assistente IA</p>
+          <h1 class="text-title char-reveal">WorkCafe Chat</h1>
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-messages">
+            <div class="chat-bubble chat-bubble--user">
+              Olá, poderia me dizer qual foi a margem de lucro do Espresso no último mês e se há algum risco de falta de grãos?
+            </div>
+            <div class="chat-bubble chat-bubble--agent">
+              <p>Claro! O <strong>Espresso</strong> teve uma margem de lucro de <strong>75,3%</strong> no último mês. </p>
+              <p style="margin-top: 0.75rem;">Analisando os níveis de estoque e a rede de fornecedores, atualmente nosso nível de grãos de café premium está em 45%, o que é considerado seguro para as próximas 3 semanas. Não há risco iminente de ruptura.</p>
+              <span class="chat-citation">Fonte: relatorio_estoque_julho.xlsx</span>
+            </div>
+            <div class="chat-bubble chat-bubble--agent" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+              <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" placeholder="Faça uma pergunta sobre o negócio ou documentos...">
+            <button class="chat-send">
+              <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Documents View -->
+      <section id="documents" class="view">
+        <div class="view-header">
+          <p class="text-label" style="margin-bottom: 0.5rem;">Base de Conhecimento</p>
+          <h1 class="text-title char-reveal">Documentos</h1>
+        </div>
+
+        <div class="upload-area">
+          <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: var(--color-terracotta); margin-bottom: 1rem;"></i>
+          <h3 class="text-card-title">Arraste seus arquivos aqui</h3>
+          <p class="text-body" style="margin-top: 0.5rem;">Suporta PDF, DOCX, XLSX e TXT</p>
+        </div>
+
+        <div class="doc-list">
+          <div class="doc-card">
+            <div class="doc-card__info">
+              <div class="doc-card__icon">
+                <i data-lucide="file-spreadsheet"></i>
+              </div>
+              <div>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">relatorio_estoque_julho.xlsx</h4>
+                <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 12/07/2026 • 24 chunks</p>
+              </div>
+            </div>
+            <span class="doc-badge">Logística</span>
+          </div>
+
+          <div class="doc-card">
+            <div class="doc-card__info">
+              <div class="doc-card__icon">
+                <i data-lucide="file-text"></i>
+              </div>
+              <div>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">manual_barista_v2.pdf</h4>
+                <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 05/07/2026 • 156 chunks</p>
+              </div>
+            </div>
+            <span class="doc-badge">Treinamento</span>
+          </div>
+
+          <div class="doc-card">
+            <div class="doc-card__info">
+              <div class="doc-card__icon">
+                <i data-lucide="file-spreadsheet"></i>
+              </div>
+              <div>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">escala_funcionarios.xlsx</h4>
+                <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 01/07/2026 • 12 chunks</p>
+              </div>
+            </div>
+            <span class="doc-badge">RH</span>
+          </div>
+
+          <div class="doc-card">
+            <div class="doc-card__info">
+              <div class="doc-card__icon">
+                <i data-lucide="file"></i>
+              </div>
+              <div>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">contrato_fornecedor_graos.docx</h4>
+                <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 15/06/2026 • 45 chunks</p>
+              </div>
+            </div>
+            <span class="doc-badge">Jurídico</span>
+          </div>
+          
+          <div class="doc-card">
+            <div class="doc-card__info">
+              <div class="doc-card__icon">
+                <i data-lucide="file-text"></i>
+              </div>
+              <div>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">politica_reembolso.pdf</h4>
+                <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 10/06/2026 • 28 chunks</p>
+              </div>
+            </div>
+            <span class="doc-badge">RH</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -35,6 +35,18 @@ def fetch_dataset(category: str) -> str:
     result = collection.get(where={"category": category})
     return "\n".join(result["documents"])
 
+def build_company_context() -> str:
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = client.get_collection("cafe_docs")
+
+    context_chunks = []
+    for category in ["financeiro", "operacional", "rh"]:
+        result = collection.get(where={"category": category})
+        if result["documents"]:
+            context_chunks.extend(result["documents"][:5])
+
+    return "\n".join(context_chunks)
+
 
 def correlate(dataset_a: str, dataset_b: str) -> dict:
     cat_a = DISPLAY_TO_CATEGORY.get(dataset_a, dataset_a)
@@ -42,10 +54,16 @@ def correlate(dataset_a: str, dataset_b: str) -> dict:
 
     data_a = fetch_dataset(cat_a)
     data_b = fetch_dataset(cat_b)
+    context = build_company_context()
 
     llm = get_llm()
 
-    prompt = f"""Você é um analista de dados de uma cafeteria. Analise os dois conjuntos de dados abaixo e identifique correlações, padrões e relações de causa e efeito entre eles.
+    prompt = f"""Você é um analista de dados especialista desta cafeteria. Você conhece profundamente o negócio e usa esse conhecimento para contextualizar suas análises.
+
+CONTEXTO DA EMPRESA:
+{context}
+
+Com base nesse contexto, analise a correlação entre os dois conjuntos de dados abaixo. Suas análises devem sempre considerar as metas, a estrutura operacional e o perfil do negócio descrito acima.
 
 CONJUNTO A — {dataset_a}:
 {data_a}
@@ -69,7 +87,7 @@ Regras:
 - Cada insight deve ser independente e sobre uma correlação diferente
 - Priorize dados quantitativos no resumo (%, R$, unidades)
 - Seja direto e objetivo
-- Nunca invente dados que não estejam nos conjuntos"""
+- Nunca invente dados que não estejam nos conjuntos ou no contexto"""
 
     response = llm.invoke(prompt)
     content = response.content

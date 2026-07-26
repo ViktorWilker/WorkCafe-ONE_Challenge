@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
     }
   </script>
 </head>
+
 <body>
   <div class="app-container">
     <!-- Sidebar -->
@@ -35,7 +37,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      
+
       <!-- Dashboard View -->
       <section id="dashboard" class="view active">
         <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -110,7 +112,8 @@
                   <canvas id="lineChart" style="width: 100%; height: 100%;"></canvas>
                 </div>
               </div>
-              <div class="pane-split-right" style="flex: 1; display: flex; flex-direction: column; gap: 2.5rem; justify-content: center;">
+              <div class="pane-split-right"
+                style="flex: 1; display: flex; flex-direction: column; gap: 2.5rem; justify-content: center;">
                 <!-- Total YTD -->
                 <div>
                   <h3 class="text-card-title pane-title">Faturamento Total (Ano)</h3>
@@ -119,7 +122,7 @@
                     <span class="delta" style="margin-left: 0.75rem;">+12.4% vs ano anterior</span>
                   </div>
                 </div>
-                
+
                 <!-- Ticket Médio -->
                 <div>
                   <h3 class="text-card-title pane-title">Ticket Médio</h3>
@@ -134,7 +137,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Margem -->
           <div class="dash-pane" id="pane-margem">
             <div class="pane-split">
@@ -155,7 +158,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Estoque -->
           <div class="dash-pane" id="pane-estoque">
             <div class="pane-split">
@@ -186,7 +189,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Fornecedores -->
           <div class="dash-pane" id="pane-fornecedores">
             <div class="node-graph-placeholder">
@@ -196,7 +199,7 @@
               <button class="btn btn--terracotta" disabled style="opacity: 0.5; cursor: not-allowed;">Ver Rede</button>
             </div>
           </div>
-          
+
           <!-- Base de Docs -->
           <div class="dash-pane" id="pane-basedocs">
             <h3 class="text-card-title pane-title">Distribuição por Categoria</h3>
@@ -209,7 +212,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Correlações -->
           <div class="dash-pane" id="pane-correlacoes" style="padding: 1.5rem 2rem;">
             <div class="corr-top">
@@ -249,7 +252,8 @@
                     <i data-lucide="sparkles" style="margin-right: 0.5rem; width: 18px; height: 18px;"></i>
                     Analisar Correlação
                   </button>
-                  <span id="insightsLabel" class="font-serif" style="color: var(--color-stone-500); font-size: 0.95rem; display: none;">Insights do Agente</span>
+                  <span id="insightsLabel" class="font-serif"
+                    style="color: var(--color-stone-500); font-size: 0.95rem; display: none;">Insights do Agente</span>
                 </div>
                 <div class="corr-analysis-text view" id="corrAnalysisText" style="display: block; opacity: 1;">
                   <p style="font-style: italic; color: var(--color-stone-500);" class="font-serif">
@@ -264,22 +268,42 @@
 
       <!-- Chat View -->
       <section id="chat" class="view">
-        <div class="view-header">
-          <p class="text-label" style="margin-bottom: 0.5rem;">Assistente IA</p>
-          <h1 class="text-title char-reveal">WorkCafe Chat</h1>
+        <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <p class="text-label" style="margin-bottom: 0.5rem;">Assistente IA</p>
+            <h1 class="text-title char-reveal">WorkCafe Chat</h1>
+          </div>
+          <div style="position: relative;">
+            <button class="btn" id="btnExportChat"
+              style="border: 1px solid var(--color-stone-300); color: var(--color-stone-500); background: transparent;">
+              <i data-lucide="download" style="width: 16px; height: 16px; margin-right: 0.5rem;"></i>
+              Exportar
+            </button>
+            <div id="exportChatDropdown" class="card"
+              style="display: none; position: absolute; right: 0; top: calc(100% + 0.5rem); padding: 0.25rem; z-index: 10; min-width: 120px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+              <button id="btnExportJson"
+                style="display: block; width: 100%; text-align: left; padding: 0.5rem; background: transparent; border: none; font-family: inherit; color: var(--color-stone-700); cursor: pointer; border-radius: 4px;">JSON</button>
+              <button id="btnExportMd"
+                style="display: block; width: 100%; text-align: left; padding: 0.5rem; background: transparent; border: none; font-family: inherit; color: var(--color-stone-700); cursor: pointer; border-radius: 4px;">Markdown
+                (.md)</button>
+              <button id="btnExportPdf"
+                style="display: block; width: 100%; text-align: left; padding: 0.5rem; background: transparent; border: none; font-family: inherit; color: var(--color-stone-700); cursor: pointer; border-radius: 4px;">PDF</button>
+            </div>
+          </div>
         </div>
 
         <div class="chat-container">
+          <div id="chatDisclaimer"
+            style="background: rgba(202, 104, 83, 0.05); color: var(--color-stone-500); padding: 8px 16px; border-radius: 4px; text-align: center; font-size: 0.85rem; margin-bottom: 1rem; border: 1px solid rgba(202, 104, 83, 0.1);">
+            A conversa é mantida durante a sessão. Recarregar a página apaga o histórico.
+          </div>
           <div class="chat-messages">
-            <div class="chat-bubble chat-bubble--user">
-              Olá, poderia me dizer qual foi a margem de lucro do Espresso no último mês e se há algum risco de falta de grãos?
-            </div>
             <div class="chat-bubble chat-bubble--agent">
-              <p>Claro! O <strong>Espresso</strong> teve uma margem de lucro de <strong>75,3%</strong> no último mês. </p>
-              <p style="margin-top: 0.75rem;">Analisando os níveis de estoque e a rede de fornecedores, atualmente nosso nível de grãos de café premium está em 45%, o que é considerado seguro para as próximas 3 semanas. Não há risco iminente de ruptura.</p>
-              <span class="chat-citation">Fonte: relatorio_estoque_julho.xlsx</span>
+              <p>Olá! Sou o agente inteligente do WorkCafe. Estou aqui para auxiliar com análises financeiras, de
+                estoque e dúvidas sobre a operação. Como posso te ajudar hoje?</p>
             </div>
-            <div class="chat-bubble chat-bubble--agent" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+            <div class="chat-bubble chat-bubble--agent"
+              style="padding: 0; background: transparent; border: none; box-shadow: none; display: none;">
               <div class="typing-indicator">
                 <div class="typing-dot"></div>
                 <div class="typing-dot"></div>
@@ -304,7 +328,8 @@
         </div>
 
         <div class="upload-area">
-          <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: var(--color-terracotta); margin-bottom: 1rem;"></i>
+          <i data-lucide="upload-cloud"
+            style="width: 48px; height: 48px; color: var(--color-terracotta); margin-bottom: 1rem;"></i>
           <h3 class="text-card-title">Arraste seus arquivos aqui</h3>
           <p class="text-body" style="margin-top: 0.5rem;">Suporta PDF, DOCX, XLSX e TXT</p>
         </div>
@@ -316,7 +341,8 @@
                 <i data-lucide="file-spreadsheet"></i>
               </div>
               <div>
-                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">relatorio_estoque_julho.xlsx</h4>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">
+                  relatorio_estoque_julho.xlsx</h4>
                 <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 12/07/2026 • 24 chunks</p>
               </div>
             </div>
@@ -329,7 +355,8 @@
                 <i data-lucide="file-text"></i>
               </div>
               <div>
-                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">manual_barista_v2.pdf</h4>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">manual_barista_v2.pdf
+                </h4>
                 <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 05/07/2026 • 156 chunks</p>
               </div>
             </div>
@@ -342,7 +369,8 @@
                 <i data-lucide="file-spreadsheet"></i>
               </div>
               <div>
-                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">escala_funcionarios.xlsx</h4>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">
+                  escala_funcionarios.xlsx</h4>
                 <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 01/07/2026 • 12 chunks</p>
               </div>
             </div>
@@ -355,20 +383,22 @@
                 <i data-lucide="file"></i>
               </div>
               <div>
-                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">contrato_fornecedor_graos.docx</h4>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">
+                  contrato_fornecedor_graos.docx</h4>
                 <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 15/06/2026 • 45 chunks</p>
               </div>
             </div>
             <span class="doc-badge">Jurídico</span>
           </div>
-          
+
           <div class="doc-card">
             <div class="doc-card__info">
               <div class="doc-card__icon">
                 <i data-lucide="file-text"></i>
               </div>
               <div>
-                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">politica_reembolso.pdf</h4>
+                <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">politica_reembolso.pdf
+                </h4>
                 <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em 10/06/2026 • 28 chunks</p>
               </div>
             </div>
@@ -382,4 +412,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

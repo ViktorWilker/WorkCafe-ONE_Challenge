@@ -873,43 +873,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const chatSendBtn = document.querySelector('.chat-send');
   const chatMessages = document.querySelector('.chat-messages');
   const chatThreadId = generateUUID();
+  const conversationHistory = [];
 
   function formatMarkdown(text) {
     let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+    formatted = formatted.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
     
-    const lines = formatted.split('\\n');
+    const lines = formatted.split('\n');
     let html = '';
     let inList = false;
     let listType = '';
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      if (!line) {
-        if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
-        continue;
-      }
       
-      const ulMatch = line.match(/^[-*]\\s+(.*)/);
-      const olMatch = line.match(/^\\d+\\.\\s+(.*)/);
+      const ulMatch = line.match(/^[-*]\s+(.*)/);
+      const olMatch = line.match(/^\d+\.\s+(.*)/);
 
       if (ulMatch) {
         if (!inList || listType !== 'ul') {
           if (inList) html += '</ol>';
-          html += '<ul style="margin-top:0.5rem; margin-bottom:0.5rem; padding-left:1.5rem;">';
+          html += '<ul>';
           inList = true; listType = 'ul';
         }
         html += `<li>${ulMatch[1]}</li>`;
       } else if (olMatch) {
         if (!inList || listType !== 'ol') {
           if (inList) html += '</ul>';
-          html += '<ol style="margin-top:0.5rem; margin-bottom:0.5rem; padding-left:1.5rem;">';
+          html += '<ol>';
           inList = true; listType = 'ol';
         }
         html += `<li>${olMatch[1]}</li>`;
       } else {
-        if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
-        html += `<p style="margin-top: 0.5rem;">${line}</p>`;
+        const justClosedList = inList;
+        if (inList) { 
+          html += listType === 'ul' ? '</ul>' : '</ol>'; 
+          inList = false; 
+        }
+        
+        if (i > 0 && !justClosedList) {
+           html += '<br>';
+        }
+        html += line;
       }
     }
     if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; }
@@ -924,6 +930,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const userBubble = document.createElement('div');
     userBubble.className = 'chat-bubble chat-bubble--user';
     userBubble.textContent = question;
+
+    conversationHistory.push({
+      role: 'user',
+      content: question,
+      timestamp: new Date().toISOString()
+    });
     const typingBubbleContainer = document.querySelector('.typing-indicator').parentElement;
     chatMessages.insertBefore(userBubble, typingBubbleContainer);
 
@@ -942,6 +954,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!response.ok) throw new Error('API error');
       const data = await response.json();
+
+      conversationHistory.push({
+        role: 'agent',
+        content: data.answer,
+        timestamp: new Date().toISOString()
+      });
 
       const sourceText = data.source ? data.source : "documentos internos";
 
@@ -973,6 +991,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const typingBubbleContainer = document.querySelector('.typing-indicator').parentElement;
     if (typingBubbleContainer) typingBubbleContainer.style.display = 'none';
+  }
+
+  // --- Export Logic ---
+  const btnExportChat = document.getElementById('btnExportChat');
+  const exportChatDropdown = document.getElementById('exportChatDropdown');
+  const btnExportJson = document.getElementById('btnExportJson');
+  const btnExportMd = document.getElementById('btnExportMd');
+  const btnExportPdf = document.getElementById('btnExportPdf');
+
+  if (btnExportChat && exportChatDropdown) {
+    btnExportChat.addEventListener('click', () => {
+      exportChatDropdown.style.display = exportChatDropdown.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!btnExportChat.contains(e.target) && !exportChatDropdown.contains(e.target)) {
+        exportChatDropdown.style.display = 'none';
+      }
+    });
+
+    btnExportJson.addEventListener('click', () => {
+      exportChatDropdown.style.display = 'none';
+      const dataStr = JSON.stringify(conversationHistory, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workcafe-conversa.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    btnExportMd.addEventListener('click', () => {
+      exportChatDropdown.style.display = 'none';
+      let mdContent = '';
+      conversationHistory.forEach(msg => {
+        const date = new Date(msg.timestamp);
+        const hhmm = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+        const author = msg.role === 'user' ? 'Usuário' : 'WorkCafe';
+        mdContent += `**${author}** (${hhmm}):\n${msg.content}\n\n`;
+      });
+      const blob = new Blob([mdContent], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workcafe-conversa.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    btnExportPdf.addEventListener('click', () => {
+      exportChatDropdown.style.display = 'none';
+      window.print();
+    });
   }
 
   // --- Documents Upload Logic ---

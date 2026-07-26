@@ -8,6 +8,8 @@ from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from agents.graph import build_graph, run_chat, run_ingest, run_correlate, set_broadcast_callback
+
 
 load_dotenv()
 
@@ -82,6 +84,31 @@ async def upload(file: UploadFile = File(...)):
 
     chunks = run_ingest(dest, graph)
     return {"message": f"Arquivo '{file.filename}' indexado.", "chunks": chunks}
+
+class CorrelateRequest(BaseModel):
+    dataset_a: str
+    dataset_b: str
+
+class CorrelateResponse(BaseModel):
+    insights: list
+    dataset_a: str
+    dataset_b: str
+
+@app.post("/correlate", response_model=CorrelateResponse)
+async def correlate_endpoint(request: CorrelateRequest):
+    import json
+    raw = run_correlate(request.dataset_a, request.dataset_b, graph)
+    print(f"[Correlate] raw output: {raw}")
+    try:
+        parsed = json.loads(raw)
+    except Exception as e:
+        print(f"[Correlate] parse error: {e}")
+        parsed = {"insights": []}
+    return CorrelateResponse(
+        insights=parsed.get("insights", []),
+        dataset_a=request.dataset_a,
+        dataset_b=request.dataset_b
+    )
 
 
 @app.websocket("/ws/charts")

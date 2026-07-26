@@ -61,28 +61,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const counters = view.querySelectorAll('.counter');
     counters.forEach(counter => {
       const target = parseInt(counter.getAttribute('data-target'), 10);
-      const duration = 1500; // ms
-      const start = performance.now();
-      
-      function update(currentTime) {
-        const elapsed = currentTime - start;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing (easeOutExpo)
-        const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-        const current = Math.floor(target * ease);
-        
-        // Format with dots if > 999
-        counter.innerText = current.toLocaleString('pt-BR');
-        
-        if (progress < 1) {
-          requestAnimationFrame(update);
-        } else {
-          counter.innerText = target.toLocaleString('pt-BR');
-        }
-      }
-      requestAnimationFrame(update);
+      animateCounter(counter, target);
     });
+  }
+
+  function animateCounter(counter, target) {
+    const duration = 1500; // ms
+    const start = performance.now();
+    const initial = parseInt(counter.innerText.replace(/\./g, ''), 10) || 0;
+    
+    function update(currentTime) {
+      const elapsed = currentTime - start;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Easing (easeOutExpo)
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = Math.floor(initial + (target - initial) * ease);
+      
+      // Format with dots if > 999
+      counter.innerText = current.toLocaleString('pt-BR');
+      
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        counter.innerText = target.toLocaleString('pt-BR');
+        counter.setAttribute('data-target', target);
+      }
+    }
+    requestAnimationFrame(update);
   }
 
   // Trigger animations for the initially active view
@@ -190,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.textBaseline = 'middle';
         ctx.fillText(i * 100 + 'k', padding.left - 10, y);
       }
-      ctx.strokeStyle = 'rgba(38, 38, 36, 0.1)';
+      ctx.strokeStyle = document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(38, 38, 36, 0.1)';
       ctx.stroke();
 
       // Line
@@ -533,9 +539,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const data = [
       { label: 'Treinamento', chunks: 156, color: colors.terracotta },
-      { label: 'Jurídico', chunks: 45, color: colors.stone900 },
+      { label: 'Jurídico', chunks: 45, color: '#4a4543' },
       { label: 'Logística', chunks: 24, color: '#9a8c98' },
-      { label: 'RH', chunks: 40, color: colors.stone500 },
+      { label: 'RH', chunks: 40, color: '#7a8b6e' },
       { label: 'Marketing', chunks: 15, color: '#c9ada7' }
     ];
 
@@ -577,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Inner circle for donut
       ctx.beginPath();
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = colors.white;
       ctx.arc(centerX, centerY, radius * 0.65, 0, 2 * Math.PI);
       ctx.fill();
 
@@ -681,21 +687,101 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       corrAnalysisText.style.opacity = '1';
     }, 200);
+    const insightsLabel = document.getElementById('insightsLabel');
+    if (insightsLabel) insightsLabel.style.display = 'none';
   }
 
+  const typeMapping = {
+    'faturamento': 'Faturamento',
+    'margem': 'Margem',
+    'estoque': 'Estoque',
+    'fornecedores': 'Fornecedores',
+    'basedocs': 'Base de Docs'
+  };
+
   if (btnAnalyzeCorr) {
-    btnAnalyzeCorr.addEventListener('click', () => {
+    btnAnalyzeCorr.addEventListener('click', async () => {
+      const selectedA = typeMapping[corrSelectA.value];
+      const selectedB = typeMapping[corrSelectB.value];
+
+      const originalBtnHTML = btnAnalyzeCorr.innerHTML;
+      btnAnalyzeCorr.disabled = true;
+      btnAnalyzeCorr.innerHTML = `
+        <div class="typing-indicator" style="display: flex; gap: 4px; justify-content: center; align-items: center; height: 100%;">
+          <div class="typing-dot" style="background-color: currentColor;"></div>
+          <div class="typing-dot" style="background-color: currentColor;"></div>
+          <div class="typing-dot" style="background-color: currentColor;"></div>
+        </div>
+      `;
+
       corrAnalysisText.style.opacity = '0';
-      setTimeout(() => {
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const skeletonCard = `
+        <div style="background-color: var(--color-white); border-radius: var(--radius-xl); border: 1px solid var(--border-light); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 1rem;">
+          <div class="pulse-anim" style="width: 60px; height: 12px; background-color: var(--border-light); border-radius: 4px;"></div>
+          <div class="pulse-anim" style="width: 70%; height: 20px; background-color: var(--border-light); border-radius: 4px;"></div>
+          <div class="pulse-anim" style="width: 100%; height: 48px; background-color: var(--border-light); border-radius: 4px;"></div>
+          <div class="pulse-anim" style="width: 100%; height: 60px; background-color: var(--border-light); border-radius: 4px;"></div>
+        </div>
+      `;
+      corrAnalysisText.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%;">
+          ${skeletonCard.repeat(4)}
+        </div>
+      `;
+      corrAnalysisText.style.opacity = '1';
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      try {
+        const response = await fetch('http://localhost:8000/correlate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataset_a: selectedA, dataset_b: selectedB })
+        });
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        
+        const insightsHTML = (data.insights || []).map((insight, index) => `
+          <div style="background-color: var(--color-white); border-radius: var(--radius-xl); border: 1px solid var(--border-light); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.75rem; opacity: 0; animation: slideUp 0.4s ease forwards; animation-delay: ${index * 0.1}s;">
+            <h4 class="font-serif" style="font-size: 16px; font-weight: 600; color: var(--color-terracotta); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">${insight.titulo || ''}</h4>
+            <p class="font-sans" style="font-size: 1.05rem; font-weight: 500; color: var(--color-stone-900); border-left: 3px solid var(--color-terracotta); padding-left: 0.75rem; margin: 0;">${insight.resumo || ''}</p>
+            <p class="font-sans" style="font-size: 0.95rem; color: var(--color-stone-600); line-height: 1.5; margin: 0;">${insight.detalhe || ''}</p>
+          </div>
+        `).join('');
+
+        const gridHTML = `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%;">
+            ${insightsHTML}
+          </div>
+        `;
+        
+        corrAnalysisText.style.opacity = '0';
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        corrAnalysisText.innerHTML = gridHTML;
+        corrAnalysisText.style.opacity = '1';
+        
+        const insightsLabel = document.getElementById('insightsLabel');
+        if (insightsLabel) insightsLabel.style.display = 'block';
+
+      } catch (error) {
+        corrAnalysisText.style.opacity = '0';
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         corrAnalysisText.innerHTML = `
-          <p>
-            Nos meses em que o faturamento supera R$ 255.000, a margem do Espresso tende 
-            a ser 3,2% maior. Isso sugere que períodos de alta demanda favorecem produtos 
-            de alto giro e boa margem.
-          </p>
+          <div style="display: flex; justify-content: center; align-items: center; width: 100%; padding: 2rem;">
+            <p style="color: var(--color-stone-500); font-style: italic;" class="font-serif">Não foi possível gerar os insights. Tente novamente.</p>
+          </div>
         `;
         corrAnalysisText.style.opacity = '1';
-      }, 200);
+      } finally {
+        btnAnalyzeCorr.disabled = false;
+        btnAnalyzeCorr.innerHTML = originalBtnHTML;
+      }
     });
   }
 
@@ -732,6 +818,279 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) window.lucide.createIcons();
       drawActiveChart();
     });
+  }
+
+  // --- Utility logic ---
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes subtlePulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .pulse-anim {
+      animation: subtlePulse 1.5s infinite ease-in-out;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // --- WebSocket Logic ---
+  let chartsDataStore = null;
+
+  function initWebSocket() {
+    const ws = new WebSocket('ws://localhost:8000/ws/charts');
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        chartsDataStore = data;
+        
+        if (data.total_chunks !== undefined) {
+          const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
+          const docsHeader = headers.find(el => el.textContent.includes('Docs Indexados'));
+          if (docsHeader) {
+            const docsKpi = docsHeader.parentElement.nextElementSibling.querySelector('.counter');
+            if (docsKpi) {
+              animateCounter(docsKpi, data.total_chunks);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing WS message:', err);
+      }
+    };
+  }
+  initWebSocket();
+
+  // --- Chat Logic ---
+  const chatInput = document.querySelector('.chat-input');
+  const chatSendBtn = document.querySelector('.chat-send');
+  const chatMessages = document.querySelector('.chat-messages');
+  const chatThreadId = generateUUID();
+
+  function formatMarkdown(text) {
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    const lines = formatted.split('\\n');
+    let html = '';
+    let inList = false;
+    let listType = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) {
+        if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+        continue;
+      }
+      
+      const ulMatch = line.match(/^[-*]\\s+(.*)/);
+      const olMatch = line.match(/^\\d+\\.\\s+(.*)/);
+
+      if (ulMatch) {
+        if (!inList || listType !== 'ul') {
+          if (inList) html += '</ol>';
+          html += '<ul style="margin-top:0.5rem; margin-bottom:0.5rem; padding-left:1.5rem;">';
+          inList = true; listType = 'ul';
+        }
+        html += `<li>${ulMatch[1]}</li>`;
+      } else if (olMatch) {
+        if (!inList || listType !== 'ol') {
+          if (inList) html += '</ul>';
+          html += '<ol style="margin-top:0.5rem; margin-bottom:0.5rem; padding-left:1.5rem;">';
+          inList = true; listType = 'ol';
+        }
+        html += `<li>${olMatch[1]}</li>`;
+      } else {
+        if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+        html += `<p style="margin-top: 0.5rem;">${line}</p>`;
+      }
+    }
+    if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; }
+    
+    return html;
+  }
+
+  async function sendChatMessage() {
+    const question = chatInput.value.trim();
+    if (!question) return;
+
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble chat-bubble--user';
+    userBubble.textContent = question;
+    const typingBubbleContainer = document.querySelector('.typing-indicator').parentElement;
+    chatMessages.insertBefore(userBubble, typingBubbleContainer);
+
+    chatInput.value = '';
+    chatInput.disabled = true;
+    chatSendBtn.disabled = true;
+
+    typingBubbleContainer.style.display = 'block';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, thread_id: chatThreadId })
+      });
+      if (!response.ok) throw new Error('API error');
+      const data = await response.json();
+
+      const sourceText = data.source ? data.source : "documentos internos";
+
+      const agentBubble = document.createElement('div');
+      agentBubble.className = 'chat-bubble chat-bubble--agent';
+      agentBubble.innerHTML = `
+        ${formatMarkdown(data.answer)}
+        <span class="chat-citation">Fonte: ${sourceText}</span>
+      `;
+      chatMessages.insertBefore(agentBubble, typingBubbleContainer);
+    } catch (err) {
+      const errorBubble = document.createElement('div');
+      errorBubble.className = 'chat-bubble chat-bubble--agent';
+      errorBubble.innerHTML = `<p style="color: var(--color-terracotta);">Não foi possível obter resposta.</p>`;
+      chatMessages.insertBefore(errorBubble, typingBubbleContainer);
+    } finally {
+      typingBubbleContainer.style.display = 'none';
+      chatInput.disabled = false;
+      chatSendBtn.disabled = false;
+      chatInput.focus();
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
+  if (chatSendBtn && chatInput) {
+    chatSendBtn.addEventListener('click', sendChatMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+    const typingBubbleContainer = document.querySelector('.typing-indicator').parentElement;
+    if (typingBubbleContainer) typingBubbleContainer.style.display = 'none';
+  }
+
+  // --- Documents Upload Logic ---
+  const uploadArea = document.querySelector('.upload-area');
+  const docList = document.querySelector('.doc-list');
+
+  if (uploadArea) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.style.display = 'none';
+    fileInput.accept = '.pdf,.docx,.xlsx,.txt';
+    uploadArea.appendChild(fileInput);
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = 'var(--color-terracotta)';
+      uploadArea.style.backgroundColor = 'rgba(202, 104, 83, 0.05)';
+    });
+    uploadArea.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '';
+      uploadArea.style.backgroundColor = '';
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '';
+      uploadArea.style.backgroundColor = '';
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleUpload(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleUpload(e.target.files[0]);
+      }
+      fileInput.value = '';
+    });
+
+    async function handleUpload(file) {
+      const originalHtml = uploadArea.innerHTML;
+      uploadArea.style.pointerEvents = 'none';
+      
+      uploadArea.innerHTML = `
+        <i data-lucide="loader" class="pulse-anim" style="width: 48px; height: 48px; color: var(--color-terracotta); margin-bottom: 1rem;"></i>
+        <h3 class="text-card-title pulse-anim">Enviando...</h3>
+      `;
+      if (window.lucide) window.lucide.createIcons();
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('http://localhost:8000/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error('Upload error');
+        const data = await response.json();
+
+        uploadArea.innerHTML = `
+          <i data-lucide="check-circle" style="width: 48px; height: 48px; color: #7a8b6e; margin-bottom: 1rem;"></i>
+          <h3 class="text-card-title">${data.message || 'Enviado com sucesso'}</h3>
+          <p class="text-body" style="margin-top: 0.5rem;">${file.name} • ${data.chunks || 0} chunks</p>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        
+        let iconName = 'file';
+        if (file.name.endsWith('.pdf')) iconName = 'file-text';
+        else if (file.name.endsWith('.xlsx')) iconName = 'file-spreadsheet';
+        else if (file.name.endsWith('.txt')) iconName = 'file-text';
+        
+        const newDocCard = document.createElement('div');
+        newDocCard.className = 'doc-card';
+        newDocCard.style.opacity = '0';
+        newDocCard.style.transform = 'translateY(-10px)';
+        newDocCard.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        
+        newDocCard.innerHTML = `
+          <div class="doc-card__info">
+            <div class="doc-card__icon">
+              <i data-lucide="${iconName}"></i>
+            </div>
+            <div>
+              <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">${file.name}</h4>
+              <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em ${dateStr} • ${data.chunks || 0} chunks</p>
+            </div>
+          </div>
+          <span class="doc-badge">geral</span>
+        `;
+        
+        docList.insertBefore(newDocCard, docList.firstChild);
+        if (window.lucide) window.lucide.createIcons();
+        
+        requestAnimationFrame(() => {
+          newDocCard.style.opacity = '1';
+          newDocCard.style.transform = 'translateY(0)';
+        });
+
+      } catch (err) {
+        uploadArea.innerHTML = `
+          <i data-lucide="alert-circle" style="width: 48px; height: 48px; color: var(--color-terracotta); margin-bottom: 1rem;"></i>
+          <h3 class="text-card-title" style="color: var(--color-terracotta);">Erro no envio</h3>
+          <p class="text-body" style="margin-top: 0.5rem;">Não foi possível processar o arquivo.</p>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      setTimeout(() => {
+        uploadArea.innerHTML = originalHtml;
+        uploadArea.style.pointerEvents = 'auto';
+        if (window.lucide) window.lucide.createIcons();
+      }, 3000);
+    }
   }
 
   // Initial draw

@@ -1,6 +1,9 @@
 import os
 import sys
 import asyncio
+import json
+from ingestion.ingest import ingest_file
+from agents.chart_agent import build_charts_data
 from pathlib import Path
 from typing import TypedDict, Annotated
 from langgraph.graph import StateGraph, START, END
@@ -10,9 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 sys.path.append(str(Path(__file__).parent.parent / "ingestion"))
-
-from ingest import ingest_file
-from chart_agent import build_charts_data
 
 _broadcast_callback = None
 
@@ -27,6 +27,8 @@ class AgentState(TypedDict):
     filepath: str | None
     question: str | None
     thread_id: str | None
+    dataset_a: str | None
+    dataset_b: str | None
     chunks_indexed: int
     charts_data: dict | None
     answer: str | None
@@ -95,7 +97,10 @@ def route_by_task(state: AgentState) -> str:
         return "ingest"
     elif task == "chat":
         return "chat"
+    elif task == "correlate":
+        return "correlate"
     return "end"
+
 
 
 def route_after_ingest(state: AgentState) -> str:
@@ -103,6 +108,16 @@ def route_after_ingest(state: AgentState) -> str:
         return "end"
     return "charts"
 
+def correlate_node(state: AgentState) -> AgentState:
+    try:
+        from correlate_agent import correlate
+        dataset_a = state.get("dataset_a", "")
+        dataset_b = state.get("dataset_b", "")
+        print(f"[CorrelateNode] {dataset_a} vs {dataset_b}")
+        result = correlate(dataset_a, dataset_b)
+        return {**state, "answer": json.dumps(result, ensure_ascii=False)}
+    except Exception as e:
+        return {**state, "error": str(e)}
 
 def build_graph(checkpointer=None) -> StateGraph:
     builder = StateGraph(AgentState)
@@ -112,7 +127,8 @@ def build_graph(checkpointer=None) -> StateGraph:
     builder.add_node("charts", charts_node)
     builder.add_node("broadcast", broadcast_node)
     builder.add_node("chat", chat_node)
-
+    builder.add_node("correlate", correlate_node)
+    builder.add_edge("correlate", END)
     builder.add_edge(START, "router")
 
     builder.add_conditional_edges(
@@ -121,6 +137,7 @@ def build_graph(checkpointer=None) -> StateGraph:
         {
             "ingest": "ingest",
             "chat": "chat",
+            "correlate": "correlate",
             "end": END
         }
     )
@@ -174,6 +191,27 @@ def run_chat(question: str, thread_id: str, graph=None) -> str:
         config={"configurable": {"thread_id": thread_id}}
     )
     return result.get("answer", "Erro ao processar a pergunta.")
+
+def run_correlate(dataset_a: str, dataset_b: str, graph=None) -> str:
+    import uuid
+    if graph is None:
+        graph = build_graph()
+    result = graph.invoke(
+        {
+            "task": "correlate",
+            "filepath": None,
+            "question": None,
+            "thread_id": None,
+            "dataset_a": dataset_a,
+            "dataset_b": dataset_b,
+            "chunks_indexed": 0,
+            "charts_data": None,
+            "answer": None,
+            "error": None
+        },
+        config={"configurable": {"thread_id": str(uuid.uuid4())}}
+    )
+    return result.get("answer", "Erro ao processar correlação.")
 
 
 if __name__ == "__main__":

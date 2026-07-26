@@ -244,10 +244,13 @@
 
             <div class="corr-bottom">
               <div class="card corr-analysis-card">
-                <button class="btn btn--terracotta" id="btnAnalyzeCorr">
-                  <i data-lucide="sparkles" style="margin-right: 0.5rem; width: 18px; height: 18px;"></i>
-                  Analisar Correlação
-                </button>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <button class="btn btn--terracotta" id="btnAnalyzeCorr">
+                    <i data-lucide="sparkles" style="margin-right: 0.5rem; width: 18px; height: 18px;"></i>
+                    Analisar Correlação
+                  </button>
+                  <span id="insightsLabel" class="font-serif" style="color: var(--color-stone-500); font-size: 0.95rem; display: none;">Insights do Agente</span>
+                </div>
                 <div class="corr-analysis-text view" id="corrAnalysisText" style="display: block; opacity: 1;">
                   <p style="font-style: italic; color: var(--color-stone-500);" class="font-serif">
                     Selecione dois conjuntos de dados e clique em Analisar para ver a correlação.

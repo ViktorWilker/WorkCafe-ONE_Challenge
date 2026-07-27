@@ -4,6 +4,7 @@ import uuid
 import shutil
 from pathlib import Path
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -132,3 +133,5 @@ async def charts():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+app.mount("/app", StaticFiles(directory="web/workcafe", html=True), name="web")

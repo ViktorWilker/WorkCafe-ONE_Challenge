@@ -1,6 +1,5 @@
+var chartsData = null;
 document.addEventListener('DOMContentLoaded', () => {
-  let chartsData = null;
-
   // Initialize Lucide icons
   lucide.createIcons();
 
@@ -798,7 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       try {
-        const response = await fetch('http://localhost:8000/correlate', {
+        const response = await fetch('/correlate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dataset_a: selectedA, dataset_b: selectedB })
@@ -975,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchInitialChartsData() {
     try {
-      const res = await fetch('http://localhost:8000/charts');
+      const res = await fetch('/charts');
       if (res.ok) {
         chartsData = await res.json();
         updateKPIs();
@@ -989,7 +988,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initWebSocket() {
-    const ws = new WebSocket('ws://localhost:8000/ws/charts');
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/charts`);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -1095,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, thread_id: chatThreadId })
@@ -1247,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('file', file);
 
       try {
-        const response = await fetch('http://localhost:8000/upload', {
+        const response = await fetch('/upload', {
           method: 'POST',
           body: formData
         });

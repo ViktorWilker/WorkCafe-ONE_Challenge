@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+  let chartsData = null;
+
   // Initialize Lucide icons
   lucide.createIcons();
 
@@ -174,9 +176,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    const data = [180, 195, 210, 205, 240, 261, 255, 270, 290, 310, 305, 330];
-    const labels = ['Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'];
-    const maxVal = 400;
+    let data = [180, 195, 210, 205, 240, 261, 255, 270, 290, 310, 305, 330];
+    let labels = ['Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'];
+
+    if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
+      const cData = chartsData.charts.find(c => c.id === 'vendas_por_mes');
+      if (cData && cData.datasets && cData.datasets.length > 0) {
+        labels = cData.labels;
+        data = cData.datasets[0].data;
+      }
+    }
+
+    let maxVal = Math.max(...data);
+    maxVal = maxVal > 0 ? maxVal * 1.2 : 400;
+    const step = maxVal / 4;
 
     animate(canvasId, 1000, (progress) => {
       ctx.clearRect(0, 0, width, height);
@@ -194,7 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.font = '12px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(i * 100 + 'k', padding.left - 10, y);
+        
+        const labelVal = Math.round(i * step);
+        const labelText = labelVal >= 1000 ? Math.round(labelVal / 1000) + 'k' : labelVal;
+        ctx.fillText(labelText, padding.left - 10, y);
       }
       ctx.strokeStyle = document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(38, 38, 36, 0.1)';
       ctx.stroke();
@@ -307,11 +323,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    const data = [
+    let data = [
       { label: 'Cafés Especiais', bruta: 75, liquida: 55 },
       { label: 'Bebidas Geladas', bruta: 65, liquida: 45 },
       { label: 'Panificação', bruta: 50, liquida: 30 }
     ];
+
+    if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
+      const cData = chartsData.charts.find(c => c.id === 'margem_por_produto');
+      if (cData && cData.datasets && cData.datasets.length > 0) {
+        data = cData.labels.map((lbl, idx) => ({
+          label: lbl,
+          bruta: cData.datasets[0].data[idx] || 0,
+          liquida: (cData.datasets[1] ? cData.datasets[1].data[idx] : 0) || 0
+        }));
+      }
+    }
     
     const barH = 20;
     const groupH = barH * 2 + 8;
@@ -391,13 +418,25 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
 
-    const data = [
+    let data = [
       { label: 'Cafés Especiais', value: 55, color: colors.terracotta },
       { label: 'Bebidas Geladas', value: 25, color: colors.stone500 },
       { label: 'Panificação', value: 20, color: colors.amber }
     ];
+
+    if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
+      const cData = chartsData.charts.find(c => c.id === 'margem_por_produto');
+      if (cData && cData.datasets && cData.datasets.length > 0) {
+        const defaultColors = [colors.terracotta, colors.stone500, colors.amber, '#4a4543', '#9a8c98'];
+        data = cData.labels.map((lbl, idx) => ({
+          label: lbl,
+          value: cData.datasets[0].data[idx] || 0,
+          color: defaultColors[idx % defaultColors.length]
+        }));
+      }
+    }
     
-    const total = 100;
+    const total = data.reduce((sum, d) => sum + d.value, 0) || 100;
     const cx = width / 2;
     const cy = height / 2;
     const outerR = 120;
@@ -461,13 +500,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    const data = [
+    let data = [
       { label: 'Leite Aveia', atual: 15, min: 20 },
       { label: 'Copo M', atual: 5, min: 15 },
       { label: 'Grão Especial', atual: 45, min: 30 },
       { label: 'Açúcar Org.', atual: 80, min: 40 },
       { label: 'Xarope Baunilha', atual: 22, min: 20 }
     ];
+
+    if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
+      const cData = chartsData.charts.find(c => c.id === 'estoque_vs_minimo');
+      if (cData && cData.datasets && cData.datasets.length > 0) {
+        data = cData.labels.map((lbl, idx) => ({
+          label: lbl,
+          atual: cData.datasets[0].data[idx] || 0,
+          min: (cData.datasets[1] ? cData.datasets[1].data[idx] : 0) || 0
+        }));
+      }
+    }
 
     const barH = 12;
     const groupH = barH * 2 + 4;
@@ -537,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    const data = [
+    let data = [
       { label: 'Treinamento', chunks: 156, color: colors.terracotta },
       { label: 'Jurídico', chunks: 45, color: '#4a4543' },
       { label: 'Logística', chunks: 24, color: '#9a8c98' },
@@ -545,11 +595,24 @@ document.addEventListener('DOMContentLoaded', () => {
       { label: 'Marketing', chunks: 15, color: '#c9ada7' }
     ];
 
-    const total = data.reduce((sum, d) => sum + d.chunks, 0);
+    if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
+      const cData = chartsData.charts.find(c => c.id === 'distribuicao_categorias');
+      if (cData && cData.datasets && cData.datasets.length > 0) {
+        const defaultColors = [colors.terracotta, '#4a4543', '#9a8c98', '#7a8b6e', '#c9ada7'];
+        data = cData.labels.map((lbl, idx) => ({
+          label: lbl,
+          chunks: cData.datasets[0].data[idx] || 0,
+          color: defaultColors[idx % defaultColors.length]
+        }));
+      }
+    }
+
+    const total = data.reduce((sum, d) => sum + d.chunks, 0) || 1;
 
     // Build Legend HTML once
     const legendContainer = document.getElementById(legendId);
-    if (legendContainer && legendContainer.children.length === 0) {
+    if (legendContainer) {
+      legendContainer.innerHTML = '';
       data.forEach(item => {
         const pct = Math.round((item.chunks / total) * 100);
         legendContainer.innerHTML += `
@@ -841,17 +904,100 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   document.head.appendChild(style);
 
-  // --- WebSocket Logic ---
-  let chartsDataStore = null;
+  // --- Data & WebSocket Logic ---
+  function updateKPIs() {
+    if (!chartsData || !chartsData.charts) return;
+
+    // Faturamento Mensal
+    const fatChart = chartsData.charts.find(c => c.id === 'vendas_por_mes');
+    if (fatChart && fatChart.datasets && fatChart.datasets[0]) {
+      const dataArr = fatChart.datasets[0].data;
+      if (dataArr.length > 0) {
+        const lastValue = dataArr[dataArr.length - 1];
+        const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
+        const faturamentoHeader = headers.find(el => el.textContent.includes('Faturamento Mensal'));
+        if (faturamentoHeader) {
+          const kpiContainer = faturamentoHeader.parentElement.nextElementSibling.querySelector('.text-kpi');
+          if (kpiContainer) {
+            const intPart = Math.floor(lastValue);
+            const decPart = Math.round((lastValue - intPart) * 100).toString().padStart(2, '0');
+            kpiContainer.innerHTML = 'R$ <span class="counter" data-target="' + intPart + '">0</span>,' + decPart;
+            const counterEl = kpiContainer.querySelector('.counter');
+            if (counterEl) animateCounter(counterEl, intPart);
+          }
+        }
+      }
+    }
+
+    // Produto Top
+    const margemChart = chartsData.charts.find(c => c.id === 'margem_por_produto');
+    if (margemChart && margemChart.datasets && margemChart.datasets[0] && margemChart.labels.length > 0) {
+      const topProduct = margemChart.labels[0];
+      const topMargin = margemChart.datasets[0].data[0];
+      const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
+      const topProdutoHeader = headers.find(el => el.textContent.includes('Produto Top'));
+      if (topProdutoHeader) {
+        const contentDiv = topProdutoHeader.parentElement.nextElementSibling;
+        const kpiEl = contentDiv.querySelector('.text-kpi');
+        const descEl = contentDiv.querySelector('.text-body');
+        if (kpiEl) kpiEl.textContent = topProduct;
+        if (descEl) descEl.textContent = 'Margem: ' + topMargin + '%';
+      }
+    }
+
+    // Docs Indexados
+    const docsChart = chartsData.charts.find(c => c.id === 'distribuicao_categorias');
+    if (docsChart && docsChart.datasets && docsChart.datasets[0]) {
+      const totalDocs = docsChart.datasets[0].data.reduce((sum, val) => sum + val, 0);
+      const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
+      const docsHeader = headers.find(el => el.textContent.includes('Docs Indexados'));
+      if (docsHeader) {
+        const counterEl = docsHeader.parentElement.nextElementSibling.querySelector('.counter');
+        if (counterEl) animateCounter(counterEl, totalDocs);
+      }
+    }
+
+    // Rede de Fornecedores
+    const redeChart = chartsData.charts.find(c => c.id === 'rede_fornecedores');
+    if (redeChart && redeChart.nodes) {
+      let numFornecedores = 0;
+      let numCategorias = 0;
+      redeChart.nodes.forEach(n => {
+        if (n.type === 'fornecedor') numFornecedores++;
+        else if (n.type === 'categoria') numCategorias++;
+      });
+      const placeholderTitle = document.querySelector('#pane-fornecedores .text-card-title');
+      if (placeholderTitle) {
+        placeholderTitle.textContent = numFornecedores + ' fornecedores · ' + numCategorias + ' categorias';
+      }
+    }
+  }
+
+  async function fetchInitialChartsData() {
+    try {
+      const res = await fetch('http://localhost:8000/charts');
+      if (res.ok) {
+        chartsData = await res.json();
+        updateKPIs();
+        drawActiveChart();
+      } else {
+        console.error('Failed to fetch charts data, keeping mock data');
+      }
+    } catch (e) {
+      console.error('Error fetching charts data, keeping mock data', e);
+    }
+  }
 
   function initWebSocket() {
     const ws = new WebSocket('ws://localhost:8000/ws/charts');
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        chartsDataStore = data;
-        
-        if (data.total_chunks !== undefined) {
+        if (data.type === 'charts_update') {
+          chartsData = data;
+          updateKPIs();
+          drawActiveChart();
+        } else if (data.total_chunks !== undefined) {
           const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
           const docsHeader = headers.find(el => el.textContent.includes('Docs Indexados'));
           if (docsHeader) {
@@ -866,6 +1012,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   }
+  
+  fetchInitialChartsData();
   initWebSocket();
 
   // --- Chat Logic ---

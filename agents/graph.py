@@ -65,7 +65,12 @@ def charts_node(state: AgentState) -> AgentState:
 def broadcast_node(state: AgentState) -> AgentState:
     if state.get("charts_data") and _broadcast_callback:
         try:
-            asyncio.run(_broadcast_callback(state["charts_data"]))
+            import asyncio
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(_broadcast_callback(state["charts_data"]))
+            else:
+                loop.run_until_complete(_broadcast_callback(state["charts_data"]))
             print("[BroadcastNode] Charts pushed to clients")
         except Exception as e:
             print(f"[BroadcastNode] Error: {e}")

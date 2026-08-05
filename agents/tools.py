@@ -15,7 +15,7 @@ def search_documents(query: str) -> str:
     category, confidence = classify(query)
 
     if confidence >= CONFIDENCE_THRESHOLD:
-        results = hybrid_search(query, category=category, top_k=13)
+        results = hybrid_search(query, category=category, top_k=20)
     else:
         results = hybrid_search(query, category=None, top_k=5)
 

@@ -119,5 +119,53 @@
     {"text": "O bolo de cenoura é feito aqui ou vem de fornecedor?", "category": "cardapio"},
     {"text": "Qual é o item mais pedido no período da tarde?", "category": "cardapio"},
     {"text": "Tem alguma opção vegana no cardápio pra indicar pro cliente?", "category": "cardapio"},
-    {"text": "O preço do combo mudou depois da última atualização do cardápio?", "category": "cardapio"}
+    {"text": "O preço do combo mudou depois da última atualização do cardápio?", "category": "cardapio"},
+  {
+    "text": "Qual produto tá recebendo as melhores avaliações dos clientes?",
+    "category": "clientes"
+  },
+  {
+    "text": "Qual é a nota média que a cafeteria tá recebendo?",
+    "category": "clientes"
+  },
+  {
+    "text": "Quais são as reclamações que mais aparecem nos comentários?",
+    "category": "clientes"
+  },
+  {
+    "text": "Quem da equipe recebeu mais elogios dos clientes?",
+    "category": "clientes"
+  },
+  {
+    "text": "Qual atendente tem a melhor média de notas?",
+    "category": "clientes"
+  },
+  {
+    "text": "Os clientes costumam dizer que voltariam aqui?",
+    "category": "clientes"
+  },
+  {
+    "text": "Qual canal os clientes mais usam pra avaliar a gente?",
+    "category": "clientes"
+  },
+  {
+    "text": "Teve algum produto que recebeu muita crítica esse mês?",
+    "category": "clientes"
+  },
+  {
+    "text": "Quais comentários positivos apareceram mais nas avaliações?",
+    "category": "clientes"
+  },
+  {
+    "text": "As avaliações do iFood são melhores que as do atendimento presencial?",
+    "category": "clientes"
+  },
+  {
+    "text": "Teve algum dia que recebeu várias avaliações ruins?",
+    "category": "clientes"
+  },
+  {
+    "text": "Quais produtos os clientes mais elogiam nos comentários?",
+    "category": "clientes"
+  }
 ]

@@ -4,6 +4,7 @@ import time
 import chromadb
 from pathlib import Path
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,6 +18,8 @@ from parse_pdf import parse_pdf
 DOCS_DIR = Path(__file__).parent.parent / "docs"
 CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
 
+KNOWN_CATEGORIES = ["financeiro", "rh", "estoque", "fornecedores", "cardapio", "clientes", "operacional"]
+
 CATEGORY_MAP = {
     "cardapio.xlsx": "cardapio",
     "escala_funcionarios.xlsx": "rh",
@@ -29,6 +32,7 @@ CATEGORY_MAP = {
     "procedimentos_operacionais.pdf": "operacional",
     "relatorio_gerencial.pdf": "financeiro",
     "vendas_mensais.xlsx": "financeiro",
+    "avaliacoes_clientes.csv": "clientes",
 }
 
 
@@ -85,6 +89,49 @@ def chunk_file(parsed: dict) -> list[dict]:
         return chunk_pdf(parsed)
     return []
 
+def infer_category(filepath: Path, parsed: dict) -> str:
+    try:
+        sample = ""
+        if parsed["type"] == "csv":
+            rows = parsed["data"][:5]
+            sample = "\n".join(str(r) for r in rows)
+        elif parsed["type"] == "xlsx":
+            for sheet in parsed["content"].values():
+                rows = sheet["data"][:5]
+                sample = "\n".join(str(r) for r in rows)
+                break
+        elif parsed["type"] == "pdf":
+            sample = parsed["pages"][0]["content"][:500] if parsed["pages"] else ""
+
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-3.1-flash-lite",
+            google_api_key=os.getenv("GOOGLE_API_KEY_CHARTS"),
+            temperature=0
+        )
+
+        prompt = f"""Você é um classificador de documentos de uma cafeteria.
+Com base no nome do arquivo e amostra do conteúdo abaixo, escolha UMA categoria:
+
+Categorias disponíveis: {', '.join(KNOWN_CATEGORIES)}
+
+Nome do arquivo: {filepath.name}
+Amostra do conteúdo:
+{sample}
+
+Responda APENAS com o nome da categoria, sem explicação."""
+
+        response = llm.invoke(prompt)
+        content = response.content
+        if isinstance(content, list):
+            content = " ".join(c.get("text", "") for c in content if isinstance(c, dict))
+            content = content.strip().lower()
+
+        if content in KNOWN_CATEGORIES:
+            return content
+        return "geral"
+    except Exception as e:
+        print(f"[InferCategory] Error: {e}")
+        return "geral"
 
 def ingest_file(filepath: Path) -> int:
     embeddings = get_embeddings()
@@ -103,6 +150,9 @@ def ingest_file(filepath: Path) -> int:
     if not chunks:
         return 0
 
+    category = CATEGORY_MAP.get(filepath.name) or infer_category(filepath, parsed)
+    print(f"[IngestFile] Category: {category}")
+
     batch_size = 10
     total = 0
     for i in range(0, len(chunks), batch_size):
@@ -114,7 +164,7 @@ def ingest_file(filepath: Path) -> int:
         metadatas = [
             {
                 "source": filepath.name,
-                "category": CATEGORY_MAP.get(filepath.name, "geral"),
+                "category": category,
                 "type": parsed["type"]
             }
             for _ in batch
@@ -173,6 +223,7 @@ def ingest():
         time.sleep(15)
 
     print("\nIngestion complete.")
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,31 @@
+﻿id_avaliacao,data,produto_avaliado,nota,comentario,atendente_responsavel,canal,retornaria
+1,2026-01-05,Espresso,5,Café excelente e atendimento rápido.,Ana Souza,presencial,sim
+2,2026-01-08,Cappuccino Clássico,5,Muito cremoso e na temperatura certa.,Bruno Lima,presencial,sim
+3,2026-01-11,Pão de Queijo,4,Bem quentinho e saboroso.,Mariana Costa,presencial,sim
+4,2026-01-14,Latte,5,Um dos melhores lattes que já tomei.,Pedro Henrique,app,sim
+5,2026-01-18,Cold Brew,4,Refrescante e bem equilibrado.,Ana Souza,presencial,sim
+6,2026-01-22,Misto Quente,5,Sanduíche muito bem preparado.,Bruno Lima,presencial,sim
+7,2026-01-27,Bolo de Cenoura,5,Bolo fofinho e cobertura deliciosa.,Ana Souza,ifood,sim
+8,2026-02-03,Cappuccino Clássico,4,Gostei bastante do sabor.,Mariana Costa,app,sim
+9,2026-02-08,Espresso,5,Atendimento excelente e café perfeito.,Ana Souza,presencial,sim
+10,2026-02-12,Latte,3,Demorou um pouco para ficar pronto.,Pedro Henrique,presencial,sim
+11,2026-02-18,Pão de Queijo,5,Sempre muito gostoso.,Bruno Lima,presencial,sim
+12,2026-02-23,Cold Brew,4,Muito bom para dias quentes.,Mariana Costa,app,sim
+13,2026-03-01,Bolo de Cenoura,5,Chegou fresco e saboroso.,Ana Souza,ifood,sim
+14,2026-03-06,Misto Quente,4,Bem recheado e crocante.,Bruno Lima,presencial,sim
+15,2026-03-11,Espresso,5,Ótimo café para começar o dia.,Ana Souza,presencial,sim
+16,2026-03-18,Cappuccino Clássico,2,Veio morno e demorou bastante.,Pedro Henrique,presencial,não
+17,2026-03-24,Latte,5,Espuma muito boa e sabor equilibrado.,Mariana Costa,app,sim
+18,2026-04-02,Pão de Queijo,4,"Muito bom, só poderia estar mais quente.",Bruno Lima,presencial,sim
+19,2026-04-08,Cold Brew,5,Excelente qualidade.,Ana Souza,presencial,sim
+20,2026-04-15,Bolo de Cenoura,5,Muito macio e saboroso.,Mariana Costa,ifood,sim
+21,2026-04-22,Misto Quente,3,Faltava um ingrediente informado no cardápio.,Bruno Lima,presencial,sim
+22,2026-05-03,Espresso,5,Atendimento cordial e café impecável.,Ana Souza,presencial,sim
+23,2026-05-10,Latte,4,Gostei bastante do atendimento.,Pedro Henrique,app,sim
+24,2026-05-18,Cappuccino Clássico,5,Muito saboroso e bem servido.,Ana Souza,presencial,sim
+25,2026-05-29,Pão de Queijo,5,Sempre vale a pena pedir.,Bruno Lima,ifood,sim
+26,2026-06-06,Cold Brew,4,Muito refrescante.,Mariana Costa,app,sim
+27,2026-06-15,Bolo de Cenoura,2,Infelizmente estava em falta e precisei trocar o pedido.,Diego Alves,presencial,não
+28,2026-06-23,Misto Quente,5,Chegou bem quente e saboroso.,Bruno Lima,ifood,sim
+29,2026-07-02,Espresso,5,Atendimento rápido e café excelente.,Ana Souza,presencial,sim
+30,2026-07-09,Latte,4,"Muito bom, voltarei mais vezes.",Mariana Costa,presencial,sim

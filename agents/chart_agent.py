@@ -8,12 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-sys.path.append(str(Path(__file__).parent.parent / "parsers"))
-
-from parse_xlsx import parse_xlsx
-from parse_csv import parse_csv
-
-DOCS_DIR = Path(__file__).parent.parent / "docs"
 CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
 
 
@@ -25,19 +19,22 @@ def get_llm():
     )
 
 
-def get_collection():
+def fetch_category(category: str, limit: int = 40) -> str:
     client = chromadb.PersistentClient(path=str(CHROMA_DIR))
-    return client.get_collection("cafe_docs")
+    collection = client.get_collection("cafe_docs")
+    result = collection.get(where={"category": category})
+    docs = result["documents"][:limit]
+    return "\n".join(docs)
 
 
-def ask_llm_for_chart(data: dict, instruction: str, chart_id: str, chart_type: str, title: str) -> dict:
+def ask_llm_for_chart(data: str, instruction: str, chart_id: str, chart_type: str, title: str) -> dict:
     llm = get_llm()
-    prompt = f"""Você receberá dados de um documento de uma cafeteria e deve retornar um JSON para um gráfico.
+    prompt = f"""Você receberá dados de documentos de uma cafeteria e deve retornar um JSON para um gráfico.
 
 Instrução: {instruction}
 
 Dados:
-{json.dumps(data, ensure_ascii=False, indent=2)}
+{data}
 
 Retorne APENAS um JSON válido neste formato, sem texto antes ou depois:
 {{
@@ -65,13 +62,10 @@ Retorne APENAS um JSON válido neste formato, sem texto antes ou depois:
 
 
 def chart_vendas_por_mes() -> dict:
-    filepath = DOCS_DIR / "vendas_mensais.xlsx"
-    if not filepath.exists():
-        return {}
-    parsed = parse_xlsx(str(filepath))
+    data = fetch_category("financeiro", limit=60)
     return ask_llm_for_chart(
-        data=parsed,
-        instruction="Identifique as colunas de mês e receita/faturamento total. Monte um gráfico de linha com faturamento por mês em ordem cronológica.",
+        data=data,
+        instruction="Identifique dados de faturamento ou receita por mês. Se houver múltiplas fontes de dados de vendas mensais, priorize os dados mais completos e recentes. Monte um gráfico de linha com os valores mensais em ordem cronológica. Labels devem ser os meses (jan, fev, mar...). Valores em reais.",
         chart_id="vendas_por_mes",
         chart_type="line",
         title="Faturamento Mensal"
@@ -79,13 +73,10 @@ def chart_vendas_por_mes() -> dict:
 
 
 def chart_margem_por_produto() -> dict:
-    filepath = DOCS_DIR / "cardapio.xlsx"
-    if not filepath.exists():
-        return {}
-    parsed = parse_xlsx(str(filepath))
+    data = fetch_category("cardapio")
     return ask_llm_for_chart(
-        data=parsed,
-        instruction="Identifique as colunas de produto e margem bruta percentual. Selecione os top 10 produtos com maior margem. Os valores devem ser em porcentagem (0 a 100).",
+        data=data,
+        instruction="Identifique produtos e suas margens brutas percentuais. Selecione os top 10 com maior margem. Labels são os nomes dos produtos. Valores em porcentagem de 0 a 100.",
         chart_id="margem_por_produto",
         chart_type="bar",
         title="Top 10 Produtos por Margem Bruta (%)"
@@ -93,13 +84,10 @@ def chart_margem_por_produto() -> dict:
 
 
 def chart_estoque_vs_minimo() -> dict:
-    filepath = DOCS_DIR / "estoque_insumos.xlsx"
-    if not filepath.exists():
-        return {}
-    parsed = parse_xlsx(str(filepath))
+    data = fetch_category("estoque")
     return ask_llm_for_chart(
-        data=parsed,
-        instruction="Identifique as colunas de insumo, quantidade atual e quantidade mínima. Selecione os 10 insumos mais críticos (onde quantidade atual está mais próxima ou abaixo do mínimo). Monte um gráfico de barras horizontais com dois datasets: atual e mínimo.",
+        data=data,
+        instruction="Identifique insumos, quantidade atual e quantidade mínima. Selecione os 10 mais críticos (mais próximos ou abaixo do mínimo). Monte um gráfico de barras horizontais com dois datasets: Atual e Mínimo.",
         chart_id="estoque_vs_minimo",
         chart_type="bar_horizontal",
         title="Estoque Crítico vs Mínimo"
@@ -107,44 +95,56 @@ def chart_estoque_vs_minimo() -> dict:
 
 
 def chart_distribuicao_categorias() -> dict:
-    collection = get_collection()
-    categories = ["cardapio", "rh", "estoque", "fornecedores", "financeiro"]
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = client.get_collection("cafe_docs")
+    categories = ["cardapio", "rh", "estoque", "fornecedores", "financeiro", "clientes", "operacional"]
     counts = []
+    labels = []
     for cat in categories:
         result = collection.get(where={"category": cat})
-        counts.append(len(result["ids"]))
+        count = len(result["ids"])
+        if count > 0:
+            counts.append(count)
+            labels.append(cat)
 
     return {
         "id": "distribuicao_categorias",
         "type": "pie",
         "title": "Distribuição de Documentos por Categoria",
-        "labels": categories,
+        "labels": labels,
         "datasets": [{"label": "Chunks", "data": counts}]
     }
 
 
 def chart_rede_fornecedores() -> dict:
-    filepath = DOCS_DIR / "fornecedores.csv"
-    if not filepath.exists():
-        return {}
-
-    parsed = parse_csv(str(filepath))
-    data = parsed["data"]
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = client.get_collection("cafe_docs")
+    result = collection.get(where={"category": "fornecedores"})
+    docs = result["documents"]
 
     nodes = []
     edges = []
     node_ids = set()
 
-    for row in data:
-        fornecedor = row.get("nome", "")
-        produtos = str(row.get("produto", "")).split(",")
+    for doc in docs:
+        parts = [p.strip() for p in doc.split("|")]
+        fornecedor = None
+        produtos = []
+
+        for part in parts:
+            if part.lower().startswith("nome:"):
+                fornecedor = part.split(":", 1)[1].strip()
+            elif part.lower().startswith("produto:"):
+                produtos = [p.strip() for p in part.split(":", 1)[1].split(",")]
+
+        if not fornecedor:
+            continue
 
         if fornecedor not in node_ids:
             nodes.append({"id": fornecedor, "type": "fornecedor"})
             node_ids.add(fornecedor)
 
         for produto in produtos:
-            produto = produto.strip()
             if produto and produto not in node_ids:
                 nodes.append({"id": produto, "type": "categoria"})
                 node_ids.add(produto)

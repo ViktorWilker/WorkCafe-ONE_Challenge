@@ -1,4 +1,3 @@
-
 fastapi
 uvicorn[standard]
 langchain
@@ -17,3 +16,5 @@ python-dotenv
 pydantic
 scikit-learn
 watchdog
+numpy
+google-genai

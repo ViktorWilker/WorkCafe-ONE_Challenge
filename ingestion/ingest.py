@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import chromadb
+import datetime
 from pathlib import Path
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -165,7 +166,8 @@ def ingest_file(filepath: Path) -> int:
             {
                 "source": filepath.name,
                 "category": category,
-                "type": parsed["type"]
+                "type": parsed["type"],
+                "updated_at": datetime.datetime.now().strftime("%d/%m/%Y")
             }
             for _ in batch
         ]
@@ -211,7 +213,8 @@ def ingest():
                 {
                     "source": filepath.name,
                     "category": CATEGORY_MAP.get(filepath.name, "geral"),
-                    "type": parsed["type"]
+                    "type": parsed["type"],
+                    "updated_at": datetime.datetime.now().strftime("%d/%m/%Y")
                 }
                 for _ in batch
             ]

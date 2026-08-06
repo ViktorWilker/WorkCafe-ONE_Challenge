@@ -15,13 +15,13 @@ load_dotenv()
 sys.path.append(str(Path(__file__).parent.parent / "agents"))
 sys.path.append(str(Path(__file__).parent.parent / "ingestion"))
 
-from agents.graph import build_graph, run_chat, run_ingest, run_correlate, set_broadcast_callback
-from agents.chart_agent import build_charts_data
+from graph import build_graph, run_chat, run_ingest, run_correlate, set_broadcast_callback
+from chart_agent import build_charts_data
 from langgraph.checkpoint.memory import MemorySaver
 
 DOCS_DIR = Path(__file__).parent.parent / "docs"
 ALLOWED_EXTENSIONS = {".pdf", ".xlsx", ".csv"}
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
 
 active_connections: list[WebSocket] = []
 graph = None
@@ -136,3 +136,27 @@ async def health():
     return {"status": "ok"}
 
 app.mount("/app", StaticFiles(directory=BASE_DIR / "web/workcafe", html=True), name="web")
+
+@app.get("/documents")
+async def list_documents():
+    import chromadb
+    CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = client.get_or_create_collection(name="cafe_docs")
+    
+    result = collection.get(include=["metadatas"])
+    
+    docs = {}
+    for meta in result["metadatas"]:
+        source = meta.get("source", "desconhecido")
+        if source not in docs:
+            docs[source] = {
+                "name": source,
+                "category": meta.get("category", "geral"),
+                "type": meta.get("type", ""),
+                "chunks": 0,
+                "updated_at": meta.get("updated_at", "—")
+            }
+        docs[source]["chunks"] += 1
+    
+    return {"documents": list(docs.values())}

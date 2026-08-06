@@ -10,8 +10,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from langgraph.graph.message import add_messages
 from dotenv import load_dotenv
-from agents.chart_agent import build_charts_data
-from ingestion.ingest import ingest_file
+from chart_agent import build_charts_data
+from ingest import ingest_file
 
 load_dotenv()
 sys.path.append(str(Path(__file__).parent))

@@ -1467,6 +1467,45 @@ const ws = new WebSocket(wsUrl);
   const uploadArea = document.querySelector('.upload-area');
   const docList = document.querySelector('.doc-list');
 
+  async function loadDocuments() {
+    if (!docList) return;
+    try {
+      const res = await fetch(`${API_BASE}/documents`);
+      const data = await res.json();
+      
+      docList.innerHTML = '';
+      
+      data.documents.forEach(doc => {
+        let iconName = 'file';
+        if (doc.name.endsWith('.pdf')) iconName = 'file-text';
+        else if (doc.name.endsWith('.xlsx')) iconName = 'file-spreadsheet';
+        else if (doc.name.endsWith('.csv')) iconName = 'file-spreadsheet';
+
+        const card = document.createElement('div');
+        card.className = 'doc-card';
+        card.innerHTML = `
+          <div class="doc-card__info">
+            <div class="doc-card__icon">
+              <i data-lucide="${iconName}"></i>
+            </div>
+            <div>
+              <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">${doc.name}</h4>
+              <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em ${doc.updated_at} • ${doc.chunks} chunks</p>
+            </div>
+          </div>
+          <span class="doc-badge">${doc.category}</span>
+        `;
+        docList.appendChild(card);
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      console.error('Erro ao carregar documentos:', err);
+    }
+  }
+
+  loadDocuments();
+
   if (uploadArea) {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -1529,40 +1568,7 @@ const ws = new WebSocket(wsUrl);
         `;
         if (window.lucide) window.lucide.createIcons();
 
-        const today = new Date();
-        const dateStr = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        
-        let iconName = 'file';
-        if (file.name.endsWith('.pdf')) iconName = 'file-text';
-        else if (file.name.endsWith('.xlsx')) iconName = 'file-spreadsheet';
-        else if (file.name.endsWith('.txt')) iconName = 'file-text';
-        
-        const newDocCard = document.createElement('div');
-        newDocCard.className = 'doc-card';
-        newDocCard.style.opacity = '0';
-        newDocCard.style.transform = 'translateY(-10px)';
-        newDocCard.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-        
-        newDocCard.innerHTML = `
-          <div class="doc-card__info">
-            <div class="doc-card__icon">
-              <i data-lucide="${iconName}"></i>
-            </div>
-            <div>
-              <h4 class="font-serif text-lg font-medium" style="color: var(--color-stone-900);">${file.name}</h4>
-              <p class="text-body text-sm" style="margin-top: 0.25rem;">Atualizado em ${dateStr} • ${data.chunks || 0} chunks</p>
-            </div>
-          </div>
-          <span class="doc-badge">geral</span>
-        `;
-        
-        docList.insertBefore(newDocCard, docList.firstChild);
-        if (window.lucide) window.lucide.createIcons();
-        
-        requestAnimationFrame(() => {
-          newDocCard.style.opacity = '1';
-          newDocCard.style.transform = 'translateY(0)';
-        });
+        await loadDocuments();
 
       } catch (err) {
         uploadArea.innerHTML = `

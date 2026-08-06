@@ -27,9 +27,10 @@ def fetch_category(category: str, limit: int = 40) -> str:
     return "\n".join(docs)
 
 
-def ask_llm_for_chart(data: str, instruction: str, chart_id: str, chart_type: str, title: str) -> dict:
-    llm = get_llm()
-    prompt = f"""Você receberá dados de documentos de uma cafeteria e deve retornar um JSON para um gráfico.
+def ask_llm_for_chart(data: str, instruction: str, chart_id: str, chart_type: str, title: str) -> dict | None:
+    try:
+        llm = get_llm()
+        prompt = f"""Você receberá dados de documentos de uma cafeteria e deve retornar um JSON para um gráfico.
 
 Instrução: {instruction}
 
@@ -47,18 +48,22 @@ Retorne APENAS um JSON válido neste formato, sem texto antes ou depois:
   ]
 }}"""
 
-    response = llm.invoke(prompt)
-    content = response.content
-    if isinstance(content, list):
-        content = " ".join(c.get("text", "") for c in content if isinstance(c, dict))
+        response = llm.invoke(prompt)
+        content = response.content
+        if isinstance(content, list):
+            content = " ".join(c.get("text", "") for c in content if isinstance(c, dict))
 
-    content = content.strip()
-    if content.startswith("```"):
-        content = content.split("```")[1]
-        if content.startswith("json"):
-            content = content[4:]
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
 
-    return json.loads(content.strip())
+        return json.loads(content.strip())
+
+    except Exception as e:
+        print(f"[ChartAgent] Error building chart '{chart_id}': {e}")
+        return None
 
 
 def chart_vendas_por_mes() -> dict:

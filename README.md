@@ -352,12 +352,13 @@ WorkCafe-ONE_Challenge/
 | **ReAct** | Agent reasoning pattern (Reason + Act loop) |
 | **RAG** | Retrieval-Augmented Generation |
 | **MemorySaver** | In-memory per-session conversation history |
-
+- All Gemini API keys used in this project are free tier (15 RPM, limited daily quota). Heavy usage or full reindexing may exhaust the quota. Separate keys per agent type help distribute the load across independent quota pools.
 ---
 
 ## Deployment
 
-Backend runs on an OCI Always Free VM (Ubuntu 24.04) behind nginx with SSL via Certbot/Let's Encrypt. The systemd service (`workcafe.service`) manages the uvicorn process. Frontend is deployed to Netlify via the `netlify.toml` configuration.
+Backend runs on an OCI Always Free VM (Ubuntu 22.04) behind nginx with SSL via Certbot/Let's Encrypt. The systemd service (`workcafe.service`) manages the uvicorn process. Frontend is deployed to Netlify via the `netlify.toml` configuration.
+
 
 ## License
  

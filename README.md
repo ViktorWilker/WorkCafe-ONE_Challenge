@@ -1,10 +1,29 @@
 # WorkCafe — Multi-Agent AI System for Document Intelligence
 
-**Challenge:** Oracle ONE + Alura  
+**Challenge:** Oracle Next Education + Alura  
 **Stack:** Python · FastAPI · LangChain · LangGraph · ChromaDB · Gemini API · scikit-learn  
 **Deploy:** Oracle Cloud Infrastructure (Always Free tier) · Netlify
 
 ---
+## Screenshots
+ 
+**Dashboard — Performance & Insights**  
+![Dashboard](assets/Workcafe-1.jpeg)
+ 
+**Chat — Cross-document analysis (price vs profitability)**
+![Chat schedules](assets/Workcafe-2.jpeg)
+ 
+**Chat — Employee schedule query**
+![Chat analysis](assets/Workcafe-2.1.jpeg)
+ 
+**Documents — Knowledge base with indexed files**  
+![Documents](assets/Workcafe-3.jpeg)
+ 
+**OCI Console — VM running on Always Free tier**  
+![OCI Console](assets/OCI-1.jpeg)
+ 
+**Production server — systemd service active with live request logs**  
+![Systemctl](assets/OCI-2.jpeg)
 
 ## Overview
 
@@ -342,4 +361,4 @@ Backend runs on an OCI Always Free VM (Ubuntu 24.04) behind nginx with SSL via C
 
 ## License
  
-MIT — built as a portfolio and study project for the Oracle ONE + Alura challenge.
+MIT — built as a portfolio and study project for the ONE + Alura challenge.

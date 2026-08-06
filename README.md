@@ -8,7 +8,7 @@
 
 ## Overview
 
-WorkCafe is a multi-agent AI platform that allows cafe collaborators to query internal documents in natural language. The system ingests documents of multiple formats, indexes them in a local vector database, and exposes a conversational agent capable of answering questions, generating dynamic charts, and analyzing cross-dataset correlations — all in real time, without opening any document.
+WorkCafe is a multi-agent AI platform that allows cafe collaborators to query internal documents in natural language. The system ingests documents of multiple formats, indexes them in a local vector database, and exposes a conversational agent capable of answering questions, generating dynamic charts, and analyzing cross-dataset correlations, all in real time, without opening any document.
 
 The system was built around a fictional cafe (Café Aroma & Grão) with realistic operational documents: menu, stock, HR, suppliers, financials, and customer reviews.
 
@@ -110,7 +110,7 @@ When a new document is uploaded, `infer_category()` sends the filename and a con
 
 **Location:** `agents/intent_classifier.py`
 
-Before any search, the system identifies the most likely category of the user's question using a conventional ML classifier — no LLM involved.
+Before any search, the system identifies the most likely category of the user's question using a conventional ML classifier, no LLM involved.
 
 **How it works:**  
 133 example questions distributed across 7 categories are embedded with the Gemini embedding model and used to train a `LogisticRegression` from scikit-learn (C=10, max_iter=1000). The trained model is serialized to `intent_model.pkl`.
@@ -227,7 +227,7 @@ Receives two dataset display names (e.g. `"Faturamento"` and `"Estoque"`), maps 
 
 **Location:** `agents/orchestrator.py`
 
-`watchdog` monitors the `docs/` directory using OS-level filesystem events — no polling. When a file is created or modified, `DocsEventHandler` fires the pipeline:
+`watchdog` monitors the `docs/` directory using OS-level filesystem events, no polling. When a file is created or modified, `DocsEventHandler` fires the pipeline:
 
 ```
 file event → ingest_file() → build_charts_data() → broadcast()

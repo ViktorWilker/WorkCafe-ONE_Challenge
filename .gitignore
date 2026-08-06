@@ -28,3 +28,4 @@ references/
 web/references/
 .key
 .pubchroma_db/
+agents/intent_model.pkl

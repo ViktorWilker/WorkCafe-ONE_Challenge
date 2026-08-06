@@ -27,4 +27,4 @@ env/
 references/
 web/references/
 .key
-.pub
+.pubchroma_db/

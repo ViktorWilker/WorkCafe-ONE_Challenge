@@ -159,6 +159,50 @@ def chart_rede_fornecedores() -> dict:
         "edges": edges
     }
 
+def get_docs_indexados() -> int:
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = client.get_collection("cafe_docs")
+    return collection.count()
+
+def build_kpis(charts: list) -> dict:
+    kpis = {}
+
+    vendas_chart = next((c for c in charts if c and c.get("id") == "vendas_por_mes"), None)
+    if vendas_chart:
+        data = vendas_chart["datasets"][0]["data"]
+        labels = vendas_chart["labels"]
+        if len(data) >= 2:
+            atual = data[-1]
+            anterior = data[-2]
+            variacao = round((atual - anterior) / anterior * 100, 1) if anterior else 0
+            mes_ref = labels[-1] if labels else ""
+        elif len(data) == 1:
+            atual = data[0]
+            variacao = 0
+            mes_ref = labels[0] if labels else ""
+        else:
+            atual = 0
+            variacao = 0
+            mes_ref = ""
+
+        kpis["faturamento_mensal"] = {
+            "valor": atual,
+            "variacao_percentual": variacao,
+            "mes_referencia": mes_ref
+        }
+
+    margem_chart = next((c for c in charts if c and c.get("id") == "margem_por_produto"), None)
+    if margem_chart:
+        labels = margem_chart["labels"]
+        data = margem_chart["datasets"][0]["data"]
+        if labels and data:
+            kpis["produto_top"] = {
+                "nome": labels[0],
+                "margem": data[0]
+            }
+
+    return kpis
+
 
 def build_charts_data() -> dict:
     charts = [
@@ -168,9 +212,13 @@ def build_charts_data() -> dict:
         chart_margem_por_produto(),
         chart_estoque_vs_minimo(),
     ]
+    charts_filtrados = [c for c in charts if c]
+    kpis = build_kpis(charts_filtrados)
+    kpis["docs_indexados"] = get_docs_indexados()
     return {
         "type": "charts_update",
-        "charts": [c for c in charts if c]
+        "kpis": kpis,
+        "charts": charts_filtrados
     }
 
 

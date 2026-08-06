@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).parent.parent
 
 active_connections: list[WebSocket] = []
 graph = None
-
+_charts_cache = None
 
 async def broadcast_charts(data: dict):
     for connection in active_connections.copy():
@@ -84,6 +84,9 @@ async def upload(file: UploadFile = File(...)):
     with open(dest, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
+    global _charts_cache
+    _charts_cache = None  # invalida cache
+
     chunks = run_ingest(dest, graph)
     return {"message": f"Arquivo '{file.filename}' indexado.", "chunks": chunks}
 
@@ -125,10 +128,12 @@ async def websocket_charts(websocket: WebSocket):
         if websocket in active_connections:
             active_connections.remove(websocket)
 
-
 @app.get("/charts")
 async def charts():
-    return build_charts_data()
+    global _charts_cache
+    if _charts_cache is None:
+        _charts_cache = build_charts_data()
+    return _charts_cache
 
 
 @app.get("/health")

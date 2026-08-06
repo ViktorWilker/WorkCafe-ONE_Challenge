@@ -52,37 +52,33 @@
 
         <div class="bento-grid">
           <!-- Top Row: KPIs -->
-          <div class="card col-span-4">
+          <div class="card col-span-4" id="kpi-card-faturamento">
             <div class="card__header">
               <h3 class="text-card-title">Faturamento Mensal</h3>
             </div>
-            <div class="card__content">
-              <div style="display: flex; align-items: baseline;">
-                <span class="text-kpi">R$ <span class="counter" data-target="261595">0</span>,75</span>
-              </div>
-              <p class="text-body" style="margin-top: 0.5rem;">
-                <span class="delta">+8%</span> vs mês anterior
-              </p>
+            <div class="card__content" id="kpi-content-faturamento">
+              <div class="pulse-anim" style="width: 70%; height: 2.5rem; background-color: var(--color-stone-200); border-radius: 4px; margin-bottom: 0.5rem;"></div>
+              <div class="pulse-anim" style="width: 40%; height: 1rem; background-color: var(--color-stone-200); border-radius: 4px;"></div>
             </div>
           </div>
 
-          <div class="card col-span-4">
+          <div class="card col-span-4" id="kpi-card-produto">
             <div class="card__header">
               <h3 class="text-card-title">Produto Top</h3>
             </div>
-            <div class="card__content">
-              <span class="text-kpi">Espresso</span>
-              <p class="text-body" style="margin-top: 0.5rem;">Margem: 75,3%</p>
+            <div class="card__content" id="kpi-content-produto">
+              <div class="pulse-anim" style="width: 60%; height: 2.5rem; background-color: var(--color-stone-200); border-radius: 4px; margin-bottom: 0.5rem;"></div>
+              <div class="pulse-anim" style="width: 50%; height: 1rem; background-color: var(--color-stone-200); border-radius: 4px;"></div>
             </div>
           </div>
 
-          <div class="card col-span-4">
+          <div class="card col-span-4" id="kpi-card-docs">
             <div class="card__header">
               <h3 class="text-card-title">Docs Indexados</h3>
             </div>
-            <div class="card__content">
-              <span class="text-kpi counter" data-target="205">0</span>
-              <p class="text-body" style="margin-top: 0.5rem;">documentos na base</p>
+            <div class="card__content" id="kpi-content-docs">
+              <div class="pulse-anim" style="width: 40%; height: 2.5rem; background-color: var(--color-stone-200); border-radius: 4px; margin-bottom: 0.5rem;"></div>
+              <div class="pulse-anim" style="width: 60%; height: 1rem; background-color: var(--color-stone-200); border-radius: 4px;"></div>
             </div>
           </div>
 

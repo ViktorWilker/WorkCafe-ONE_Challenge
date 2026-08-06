@@ -1,3 +1,7 @@
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://163.176.80.201:8000'
+  : 'http://163.176.80.201:8000';
+
 var chartsData = null;
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Lucide icons
@@ -797,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       try {
-        const response = await fetch('/correlate', {
+        const response = await fetch(`${API_BASE}/correlate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dataset_a: selectedA, dataset_b: selectedB })
@@ -907,55 +911,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateKPIs() {
     if (!chartsData || !chartsData.charts) return;
 
-    // Faturamento Mensal
-    const fatChart = chartsData.charts.find(c => c.id === 'vendas_por_mes');
-    if (fatChart && fatChart.datasets && fatChart.datasets[0]) {
-      const dataArr = fatChart.datasets[0].data;
-      if (dataArr.length > 0) {
-        const lastValue = dataArr[dataArr.length - 1];
-        const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
-        const faturamentoHeader = headers.find(el => el.textContent.includes('Faturamento Mensal'));
-        if (faturamentoHeader) {
-          const kpiContainer = faturamentoHeader.parentElement.nextElementSibling.querySelector('.text-kpi');
-          if (kpiContainer) {
-            const intPart = Math.floor(lastValue);
-            const decPart = Math.round((lastValue - intPart) * 100).toString().padStart(2, '0');
-            kpiContainer.innerHTML = 'R$ <span class="counter" data-target="' + intPart + '">0</span>,' + decPart;
-            const counterEl = kpiContainer.querySelector('.counter');
-            if (counterEl) animateCounter(counterEl, intPart);
-          }
-        }
-      }
-    }
-
-    // Produto Top
-    const margemChart = chartsData.charts.find(c => c.id === 'margem_por_produto');
-    if (margemChart && margemChart.datasets && margemChart.datasets[0] && margemChart.labels.length > 0) {
-      const topProduct = margemChart.labels[0];
-      const topMargin = margemChart.datasets[0].data[0];
-      const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
-      const topProdutoHeader = headers.find(el => el.textContent.includes('Produto Top'));
-      if (topProdutoHeader) {
-        const contentDiv = topProdutoHeader.parentElement.nextElementSibling;
-        const kpiEl = contentDiv.querySelector('.text-kpi');
-        const descEl = contentDiv.querySelector('.text-body');
-        if (kpiEl) kpiEl.textContent = topProduct;
-        if (descEl) descEl.textContent = 'Margem: ' + topMargin + '%';
-      }
-    }
-
-    // Docs Indexados
-    const docsChart = chartsData.charts.find(c => c.id === 'distribuicao_categorias');
-    if (docsChart && docsChart.datasets && docsChart.datasets[0]) {
-      const totalDocs = docsChart.datasets[0].data.reduce((sum, val) => sum + val, 0);
-      const headers = Array.from(document.querySelectorAll('.card__header .text-card-title'));
-      const docsHeader = headers.find(el => el.textContent.includes('Docs Indexados'));
-      if (docsHeader) {
-        const counterEl = docsHeader.parentElement.nextElementSibling.querySelector('.counter');
-        if (counterEl) animateCounter(counterEl, totalDocs);
-      }
-    }
-
     // Rede de Fornecedores
     const redeChart = chartsData.charts.find(c => c.id === 'rede_fornecedores');
     if (redeChart && redeChart.nodes) {
@@ -974,7 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchInitialChartsData() {
     try {
-      const res = await fetch('/charts');
+      const res = await fetch(`${API_BASE}/charts`);
       if (res.ok) {
         chartsData = await res.json();
         updateKPIs();
@@ -987,9 +942,104 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function formatCurrency(value) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
+
+  function renderKPIs(kpis) {
+    if (!kpis) {
+      renderKPIsError();
+      return;
+    }
+    
+    // Faturamento Mensal
+    const fatContent = document.getElementById('kpi-content-faturamento');
+    if (fatContent && kpis.faturamento_mensal) {
+      const valor = kpis.faturamento_mensal.valor;
+      const variacao = kpis.faturamento_mensal.variacao_percentual;
+      const isPositive = variacao >= 0;
+      const deltaColor = isPositive ? '#7a8b6e' : '#ca6853';
+      const deltaSign = isPositive ? '+' : '';
+      const varText = typeof variacao === 'number' ? variacao.toFixed(1).replace('.', ',') : variacao;
+      
+      fatContent.innerHTML = `
+        <div style="display: flex; align-items: baseline;">
+          <span class="text-kpi">${formatCurrency(valor)}</span>
+        </div>
+        <p class="text-body" style="margin-top: 0.5rem;">
+          <span class="delta" style="color: ${deltaColor}; font-weight: 600;">${deltaSign}${varText}%</span> vs mês anterior
+        </p>
+      `;
+    }
+
+    // Produto Top
+    const prodContent = document.getElementById('kpi-content-produto');
+    if (prodContent && kpis.produto_top) {
+      const nome = kpis.produto_top.nome;
+      const margem = kpis.produto_top.margem;
+      const margemText = typeof margem === 'number' ? margem.toFixed(1).replace('.', ',') : margem;
+      prodContent.innerHTML = `
+        <span class="text-kpi">${nome}</span>
+        <p class="text-body" style="margin-top: 0.5rem;">Margem: ${margemText}%</p>
+      `;
+    }
+
+    // Docs Indexados
+    const docsContent = document.getElementById('kpi-content-docs');
+    if (docsContent && kpis.docs_indexados !== undefined) {
+      const docs = kpis.docs_indexados;
+      docsContent.innerHTML = `
+        <span class="text-kpi counter" data-target="${docs}">${docs}</span>
+        <p class="text-body" style="margin-top: 0.5rem;">documentos na base</p>
+      `;
+      
+      // Animate the counter
+      const counterEl = docsContent.querySelector('.counter');
+      if (counterEl) animateCounter(counterEl, docs);
+    }
+  }
+
+  function renderKPIsError() {
+    const defaultHtml = `
+      <div style="display: flex; align-items: baseline;">
+        <span class="text-kpi">--</span>
+      </div>
+      <p class="text-body" style="margin-top: 0.5rem;">--</p>
+    `;
+    
+    const fatContent = document.getElementById('kpi-content-faturamento');
+    if (fatContent) fatContent.innerHTML = defaultHtml;
+
+    const prodContent = document.getElementById('kpi-content-produto');
+    if (prodContent) prodContent.innerHTML = `
+      <span class="text-kpi">--</span>
+      <p class="text-body" style="margin-top: 0.5rem;">--</p>
+    `;
+
+    const docsContent = document.getElementById('kpi-content-docs');
+    if (docsContent) docsContent.innerHTML = `
+      <span class="text-kpi">--</span>
+      <p class="text-body" style="margin-top: 0.5rem;">--</p>
+    `;
+  }
+
+  async function fetchKPIsData() {
+    try {
+      const res = await fetch(`${API_BASE}/charts`);
+      if (res.ok) {
+        const data = await res.json();
+        renderKPIs(data.kpis);
+      } else {
+        renderKPIsError();
+      }
+    } catch (e) {
+      console.error('Error fetching KPIs data', e);
+      renderKPIsError();
+    }
+  }
+
   function initWebSocket() {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/charts`);
+    const ws = new WebSocket(`ws://163.176.80.201:8000/ws/charts`);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -1015,6 +1065,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   fetchInitialChartsData();
   initWebSocket();
+  fetchKPIsData();
 
   // --- Chat Logic ---
   const chatInput = document.querySelector('.chat-input');
@@ -1095,7 +1146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
-      const response = await fetch('/chat', {
+      const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, thread_id: chatThreadId })
@@ -1247,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('file', file);
 
       try {
-        const response = await fetch('/upload', {
+        const response = await fetch(`${API_BASE}/upload`, {
           method: 'POST',
           body: formData
         });

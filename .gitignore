@@ -29,3 +29,7 @@ web/references/
 .key
 .pubchroma_db/
 agents/intent_model.pkl
+*.py linguist-detectable=true
+*.js linguist-detectable=true
+*.py linguist-language=Python
+web/workcafe/app.js linguist-vendored=true

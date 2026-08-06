@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
           span.style.transitionDelay = `${i * 0.03}s`;
           span.innerHTML = char === ' ' ? '&nbsp;' : char;
           el.appendChild(span);
-          
+
           // Trigger reflow then add revealed
           setTimeout(() => span.classList.add('revealed'), 50);
         });
@@ -74,18 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const duration = 1500; // ms
     const start = performance.now();
     const initial = parseInt(counter.innerText.replace(/\./g, ''), 10) || 0;
-    
+
     function update(currentTime) {
       const elapsed = currentTime - start;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Easing (easeOutExpo)
       const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       const current = Math.floor(initial + (target - initial) * ease);
-      
+
       // Format with dots if > 999
       counter.innerText = current.toLocaleString('pt-BR');
-      
+
       if (progress < 1) {
         requestAnimationFrame(update);
       } else {
@@ -111,17 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
     tab.addEventListener('click', () => {
       const targetTab = tab.getAttribute('data-tab');
       if (currentTab === targetTab) return;
-      
+
       dashTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      
+
       dashPanes.forEach(pane => {
         pane.classList.remove('active');
         if (pane.id === 'pane-' + targetTab) {
           pane.classList.add('active');
         }
       });
-      
+
       currentTab = targetTab;
       drawActiveChart();
     });
@@ -144,14 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById(id);
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
-    
+
     const rect = canvas.parentElement.getBoundingClientRect();
     canvas.width = rect.width * window.devicePixelRatio;
     canvas.height = rect.height * window.devicePixelRatio;
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
-    
+
     return { ctx, width: rect.width, height: rect.height };
   }
 
@@ -205,12 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const y = padding.top + chartH - (i * chartH / 4);
         ctx.moveTo(padding.left, y);
         ctx.lineTo(width - padding.right, y);
-        
+
         ctx.fillStyle = colors.stone500;
         ctx.font = '12px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        
+
         const labelVal = Math.round(i * step);
         const labelText = labelVal >= 1000 ? Math.round(labelVal / 1000) + 'k' : labelVal;
         ctx.fillText(labelText, padding.left - 10, y);
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (i === data.length) break;
         const x = padding.left + (i * chartW / (data.length - 1));
         const y = padding.top + chartH - (data[i] / maxVal * chartH);
-        
+
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const y1 = padding.top + chartH - (data[drawPoints] / maxVal * chartH);
         const x2 = padding.left + ((drawPoints + 1) * chartW / (data.length - 1));
         const y2 = padding.top + chartH - (data[drawPoints + 1] / maxVal * chartH);
-        
+
         const currX = x1 + (x2 - x1) * remainder;
         const currY = y1 + (y2 - y1) * remainder;
         ctx.lineTo(currX, currY);
@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (i > drawPoints) return; // Only draw points that are revealed
         const x = padding.left + (i * chartW / (data.length - 1));
         const y = padding.top + chartH - (val / maxVal * chartH);
-        
+
         ctx.beginPath();
         ctx.fillStyle = colors.amber;
         ctx.strokeStyle = colors.terracotta;
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (i === data.length) break;
         const x = i * (width / (data.length - 1));
         const y = height - ((data[i] - minVal) / (maxVal - minVal) * height);
-        
+
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const y1 = height - ((data[drawPoints] - minVal) / (maxVal - minVal) * height);
         const x2 = (drawPoints + 1) * (width / (data.length - 1));
         const y2 = height - ((data[drawPoints + 1] - minVal) / (maxVal - minVal) * height);
-        
+
         const currX = x1 + (x2 - x1) * remainder;
         const currY = y1 + (y2 - y1) * remainder;
         ctx.lineTo(currX, currY);
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       }
     }
-    
+
     let barH = (chartH * 0.7) / data.length;
     if (barH > 24) barH = 24;
     if (barH < 6) barH = 6;
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.font = '12px "Instrument Sans", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      
+
       // Margem Bruta
       ctx.fillStyle = '#e8a87c';
       ctx.fillRect(padding.left, 10, 12, 12);
@@ -361,31 +361,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
       data.forEach((item, i) => {
         const y = padding.top + spacing + i * (groupH + spacing);
-        
+
         // Label
         ctx.fillStyle = colors.stone900;
         ctx.font = '13px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        
+
         let displayLabel = item.label;
         if (displayLabel.length > 25) {
-            displayLabel = displayLabel.substring(0, 22) + '...';
+          displayLabel = displayLabel.substring(0, 22) + '...';
         }
-        ctx.fillText(displayLabel, padding.left - 15, y + groupH/2);
+        ctx.fillText(displayLabel, padding.left - 15, y + groupH / 2);
 
         // Bruta Bar
         const wBruta = chartW * (item.bruta / 100) * progress;
         ctx.fillStyle = '#e8a87c';
         ctx.beginPath();
-        ctx.roundRect(padding.left, y, wBruta, barH, barH/2);
+        ctx.roundRect(padding.left, y, wBruta, barH, barH / 2);
         ctx.fill();
 
         if (progress > 0.8) {
           ctx.fillStyle = colors.stone900;
           ctx.textAlign = 'left';
           const valStr = typeof item.bruta === 'number' ? item.bruta.toFixed(1).replace('.', ',') : item.bruta;
-          ctx.fillText(valStr + '%', padding.left + wBruta + 10, y + barH/2);
+          ctx.fillText(valStr + '%', padding.left + wBruta + 10, y + barH / 2);
         }
       });
     });
@@ -394,22 +394,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function drawDonutChartContrib(canvasId = 'donutChartContrib', legendId = 'donutLegendContrib') {
     let canvas = document.getElementById(canvasId);
     if (!canvas) return;
-    
+
     // Remove old event listeners
     const newCanvas = canvas.cloneNode(true);
     canvas.parentNode.replaceChild(newCanvas, canvas);
     canvas = newCanvas;
-    
+
     const ctx = canvas.getContext('2d');
     const colors = getColors();
-    
+
     // Set actual resolution
     const width = 300;
     const height = 300;
     canvas.width = width * window.devicePixelRatio;
     canvas.height = height * window.devicePixelRatio;
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    
+
     // Maintain CSS size
     const rect = canvas.parentElement.getBoundingClientRect();
     const size = Math.min(rect.width, rect.height, 240);
@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       }
     }
-    
+
     const total = data.reduce((sum, d) => sum + d.value, 0) || 100;
     const cx = width / 2;
     const cy = height / 2;
@@ -453,20 +453,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderDonut(progress) {
       ctx.clearRect(0, 0, width, height);
-      
+
       let startAngle = -0.5 * Math.PI;
       const targetAngle = startAngle + (Math.PI * 2 * progress);
 
       for (let i = 0; i < data.length; i++) {
         const sliceAngle = (data[i].value / total) * Math.PI * 2;
         let endAngle = startAngle + sliceAngle;
-        
+
         if (startAngle > targetAngle) break;
         if (endAngle > targetAngle) endAngle = targetAngle;
 
         ctx.beginPath();
         ctx.fillStyle = data[i].color;
-        
+
         if (progress === 1 && i === hoveredIndex) {
           ctx.arc(cx, cy, outerR + 5, startAngle, endAngle);
           ctx.arc(cx, cy, innerR - 5, endAngle, startAngle, true);
@@ -478,24 +478,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         startAngle += sliceAngle;
       }
-      
+
       // Center Text
       if (progress === 1 && hoveredIndex >= 0 && hoveredIndex < data.length) {
         const item = data[hoveredIndex];
         const valText = typeof item.value === 'number' ? item.value.toFixed(1).replace('.', ',') + '%' : item.value + '%';
-        
+
         ctx.fillStyle = colors.stone900;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
+
         let displayLabel = item.label;
         if (displayLabel.length > 15) {
-            displayLabel = displayLabel.substring(0, 12) + '...';
+          displayLabel = displayLabel.substring(0, 12) + '...';
         }
-        
+
         ctx.font = 'bold 24px "Instrument Sans", sans-serif';
         ctx.fillText(valText, cx, cy - 10);
-        
+
         ctx.fillStyle = colors.stone500;
         ctx.font = '12px "Instrument Sans", sans-serif';
         ctx.fillText(displayLabel, cx, cy + 18);
@@ -510,14 +510,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const cssCy = cr.height / 2;
       const dx = mx - cssCx;
       const dy = my - cssCy;
-      const dist = Math.sqrt(dx*dx + dy*dy);
+      const dist = Math.sqrt(dx * dx + dy * dy);
       const scaledDist = cr.width > 0 ? dist * (300 / cr.width) : 0;
 
       if (scaledDist >= (innerR - 5) && scaledDist <= (outerR + 5)) {
         let angle = Math.atan2(dy, dx);
         let normalizedAngle = angle + 0.5 * Math.PI;
         if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
-        
+
         let currentAngle = 0;
         let newHoveredIndex = -1;
         for (let i = 0; i < data.length; i++) {
@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           currentAngle += sliceAngle;
         }
-        
+
         if (hoveredIndex !== newHoveredIndex) {
           hoveredIndex = newHoveredIndex;
           renderDonut(1);
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       }
     }
-    
+
     if (canvasId === 'barChartEstoque') {
       const alertList = document.getElementById('estoqueAlertList');
       if (alertList) {
@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let barH = (groupH - 2) / 2;
     if (barH < 4) barH = 4;
     groupH = barH * 2 + 2;
-    
+
     let spacing = (chartH - (data.length * groupH)) / (data.length + 1);
 
     animate(canvasId, 800, (progress) => {
@@ -635,42 +635,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
       data.forEach((item, i) => {
         const y = padding.top + spacing + i * (groupH + spacing);
-        
+
         ctx.fillStyle = colors.stone900;
         ctx.font = '13px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        
+
         let displayLabel = item.label;
         if (displayLabel.length > 25) {
-            displayLabel = displayLabel.substring(0, 22) + '...';
+          displayLabel = displayLabel.substring(0, 22) + '...';
         }
-        ctx.fillText(displayLabel, padding.left - 15, y + groupH/2);
+        ctx.fillText(displayLabel, padding.left - 15, y + groupH / 2);
 
         // Mínimo Bar
         const minW = chartW * (item.min / maxVal) * progress;
         ctx.fillStyle = colors.stone500;
         ctx.beginPath();
-        ctx.roundRect(padding.left, y + barH + 2, minW, barH, barH/2);
+        ctx.roundRect(padding.left, y + barH + 2, minW, barH, barH / 2);
         ctx.fill();
 
         // Atual Bar
         const atualW = chartW * (item.atual / maxVal) * progress;
         ctx.fillStyle = colors.terracotta;
         ctx.beginPath();
-        ctx.roundRect(padding.left, y, atualW, barH, barH/2);
+        ctx.roundRect(padding.left, y, atualW, barH, barH / 2);
         ctx.fill();
-        
+
         if (progress > 0.8) {
           ctx.fillStyle = colors.stone900;
           ctx.textAlign = 'left';
           ctx.font = '11px "Instrument Sans", sans-serif';
-          
+
           const valAtual = typeof item.atual === 'number' ? item.atual.toFixed(1).replace('.0', '').replace('.', ',') : item.atual;
           const valMin = typeof item.min === 'number' ? item.min.toFixed(1).replace('.0', '').replace('.', ',') : item.min;
-          
-          ctx.fillText(valAtual, padding.left + atualW + 6, y + barH/2);
-          ctx.fillText(valMin, padding.left + minW + 6, y + barH + 2 + barH/2);
+
+          ctx.fillText(valAtual, padding.left + atualW + 6, y + barH / 2);
+          ctx.fillText(valMin, padding.left + minW + 6, y + barH + 2 + barH / 2);
         }
       });
     });
@@ -681,14 +681,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const colors = getColors();
-    
+
     // Set actual resolution
     const width = 300;
     const height = 300;
     canvas.width = width * window.devicePixelRatio;
     canvas.height = height * window.devicePixelRatio;
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    
+
     const radius = Math.min(width, height) / 2 - 20;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -735,18 +735,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     animate(canvasId, 800, (progress) => {
       ctx.clearRect(0, 0, width, height);
-      
+
       let startAngle = -0.5 * Math.PI;
 
       data.forEach(item => {
         const sliceAngle = (item.chunks / total) * 2 * Math.PI * progress;
-        
+
         ctx.beginPath();
         ctx.fillStyle = item.color;
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
         ctx.fill();
-        
+
         startAngle += sliceAngle;
       });
 
@@ -762,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(Math.floor(total * progress), centerX, centerY - 10);
-      
+
       ctx.fillStyle = colors.stone500;
       ctx.font = '14px "Instrument Sans", sans-serif';
       ctx.fillText('chunks', centerX, centerY + 20);
@@ -780,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getCorrChartHTML(type, side) {
     const canvasId = `corrCanvas${side}`;
     const legendId = `corrLegend${side}`;
-    
+
     if (type === 'fornecedores') {
       return `
         <div style="width: 100%; height: 100%; overflow: auto; padding-right: 8px;">
@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }
-    
+
     if (type === 'basedocs') {
       return `
         <div class="donut-layout" style="gap: 1.5rem; width:100%; height:100%; justify-content: center; align-items: center;">
@@ -801,14 +801,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }
-    
+
     return `<canvas id="${canvasId}" style="width: 100%; height: 100%;"></canvas>`;
   }
 
   function drawCorrChart(type, side) {
     const canvasId = `corrCanvas${side}`;
     const legendId = `corrLegend${side}`;
-    switch(type) {
+    switch (type) {
       case 'faturamento': drawLineChart(canvasId); break;
       case 'margem': drawStackedBarChartMargem(canvasId); break;
       case 'estoque': drawBarChartEstoque(canvasId); break;
@@ -823,11 +823,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function drawCorrelacoes() {
     const typeA = corrSelectA.value;
     const typeB = corrSelectB.value;
-    
+
     // Inject HTML
     corrChartA.innerHTML = getCorrChartHTML(typeA, 'A');
     corrChartB.innerHTML = getCorrChartHTML(typeB, 'B');
-    
+
     // Animate charts with slight delay to ensure DOM is ready
     setTimeout(() => {
       drawCorrChart(typeA, 'A');
@@ -911,11 +911,11 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dataset_a: selectedA, dataset_b: selectedB })
         });
-        
+
         if (!response.ok) throw new Error('Network response was not ok');
-        
+
         const data = await response.json();
-        
+
         const insightsHTML = (data.insights || []).map((insight, index) => `
           <div style="background-color: var(--color-white); border-radius: var(--radius-xl); border: 1px solid var(--border-light); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.75rem; opacity: 0; animation: slideUp 0.4s ease forwards; animation-delay: ${index * 0.1}s;">
             <h4 class="font-serif" style="font-size: 16px; font-weight: 600; color: var(--color-terracotta); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">${insight.titulo || ''}</h4>
@@ -929,20 +929,20 @@ document.addEventListener('DOMContentLoaded', () => {
             ${insightsHTML}
           </div>
         `;
-        
+
         corrAnalysisText.style.opacity = '0';
         await new Promise(resolve => setTimeout(resolve, 200));
-        
+
         corrAnalysisText.innerHTML = gridHTML;
         corrAnalysisText.style.opacity = '1';
-        
+
         const insightsLabel = document.getElementById('insightsLabel');
         if (insightsLabel) insightsLabel.style.display = 'block';
 
       } catch (error) {
         corrAnalysisText.style.opacity = '0';
         await new Promise(resolve => setTimeout(resolve, 200));
-        
+
         corrAnalysisText.innerHTML = `
           <div style="display: flex; justify-content: center; align-items: center; width: 100%; padding: 2rem;">
             <p style="color: var(--color-stone-500); font-style: italic;" class="font-serif">Não foi possível gerar os insights. Tente novamente.</p>
@@ -961,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resumoId = side ? `corrFornResumo${side}` : 'fornecedoresResumo';
     const tbody = document.getElementById(tbodyId);
     const resumo = document.getElementById(resumoId);
-    
+
     if (!tbody) return;
 
     let nodes = [];
@@ -973,10 +973,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let n = cData.nodes;
         let e = cData.edges;
         if (!n && cData.datasets && cData.datasets.length > 0) {
-            n = cData.datasets[0].nodes || (cData.datasets[0].data && cData.datasets[0].data.nodes);
-            e = cData.datasets[0].edges || (cData.datasets[0].data && cData.datasets[0].data.edges);
+          n = cData.datasets[0].nodes || (cData.datasets[0].data && cData.datasets[0].data.nodes);
+          e = cData.datasets[0].edges || (cData.datasets[0].data && cData.datasets[0].data.edges);
         }
-        
+
         if (n && e) {
           nodes = JSON.parse(JSON.stringify(n));
           edges = JSON.parse(JSON.stringify(e));
@@ -985,40 +985,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (nodes.length === 0) {
-       tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 2rem; color: var(--color-stone-500); font-style: italic;">Nenhum dado de fornecedor disponível.</td></tr>';
-       resumo.textContent = "0 fornecedores · 0 categorias";
-       return;
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 2rem; color: var(--color-stone-500); font-style: italic;">Nenhum dado de fornecedor disponível.</td></tr>';
+      resumo.textContent = "0 fornecedores · 0 categorias";
+      return;
     }
 
     const fornNodes = nodes.filter(n => n.type === 'fornecedor');
     const catNodes = nodes.filter(n => n.type === 'categoria');
-    
+
     if (resumo) {
       resumo.textContent = `${fornNodes.length} fornecedores · ${catNodes.length} categorias`;
     }
 
     const fornMap = {};
     fornNodes.forEach(f => {
-       fornMap[f.id] = { id: f.id, categorias: [] };
+      fornMap[f.id] = { id: f.id, categorias: [] };
     });
 
     edges.forEach(e => {
-       const source = e.source.id || e.source;
-       const target = e.target.id || e.target;
-       if (fornMap[source]) {
-          fornMap[source].categorias.push(target);
-       }
+      const source = e.source.id || e.source;
+      const target = e.target.id || e.target;
+      if (fornMap[source]) {
+        fornMap[source].categorias.push(target);
+      }
     });
 
     const rows = Object.values(fornMap);
     rows.sort((a, b) => b.categorias.length - a.categorias.length);
 
     tbody.innerHTML = rows.map((row) => {
-       const pillsHTML = row.categorias.map(cat => 
-         `<span style="display: inline-block; background-color: rgba(107, 143, 113, 0.15); color: var(--color-stone-900); border: 1px solid rgba(107, 143, 113, 0.3); border-radius: 99px; padding: 4px 8px; font-size: 11px; margin-right: 6px; margin-bottom: 6px; white-space: normal; line-height: 1.2;">${cat}</span>`
-       ).join('');
+      const pillsHTML = row.categorias.map(cat =>
+        `<span style="display: inline-block; background-color: rgba(107, 143, 113, 0.15); color: var(--color-stone-900); border: 1px solid rgba(107, 143, 113, 0.3); border-radius: 99px; padding: 4px 8px; font-size: 11px; margin-right: 6px; margin-bottom: 6px; white-space: normal; line-height: 1.2;">${cat}</span>`
+      ).join('');
 
-       return `
+      return `
          <tr style="border-bottom: 1px solid var(--border-light); transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='rgba(38, 38, 36, 0.03)'" onmouseout="this.style.backgroundColor='transparent'">
            <td style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif; font-weight: 500; color: var(--color-stone-900);">${row.id}</td>
            <td style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif;">
@@ -1031,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function drawActiveChart() {
-    switch(currentTab) {
+    switch (currentTab) {
       case 'faturamento': drawLineChart(); drawMiniSparkline(); break;
       case 'margem': drawStackedBarChartMargem(); drawDonutChartContrib(); break;
       case 'estoque': drawBarChartEstoque(); break;
@@ -1048,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.documentElement.getAttribute('data-theme') === 'dark') {
       themeIcon.setAttribute('data-lucide', 'sun');
     }
-    
+
     themeToggle.addEventListener('click', () => {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       if (isDark) {
@@ -1060,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('workcafe-theme', 'dark');
         themeIcon.setAttribute('data-lucide', 'sun');
       }
-      
+
       if (window.lucide) window.lucide.createIcons();
       drawActiveChart();
     });
@@ -1068,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Utility logic ---
   const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
     });
@@ -1096,17 +1096,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (faturamentoChart && faturamentoChart.datasets && faturamentoChart.datasets.length > 0) {
       const faturamentoData = faturamentoChart.datasets[0].data;
       const totalAno = faturamentoData.reduce((acc, val) => acc + val, 0);
-      
+
       const elFaturamentoTotal = document.getElementById('faturamentoTotalAno');
       const elFaturamentoDelta = document.getElementById('faturamentoDeltaAno');
-      
+
       if (elFaturamentoTotal && elFaturamentoDelta) {
         if (totalAno > 1000000) {
           elFaturamentoTotal.textContent = `R$ ${(totalAno / 1000000).toFixed(1).replace('.', ',')}M`;
         } else {
           elFaturamentoTotal.textContent = formatCurrency(totalAno);
         }
-        
+
         const base = 2990093.64;
         const varAno = ((totalAno - base) / base) * 100;
         const isPos = varAno >= 0;
@@ -1114,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = isPos ? '#7a8b6e' : '#ca6853';
         elFaturamentoDelta.innerHTML = `<span style="color: ${color}; font-weight: 600;">${sign}${varAno.toFixed(1).replace('.', ',')}%</span> vs ano anterior`;
       }
-      
+
       // Ticket Médio
       if (faturamentoChart.datasets.length > 1) {
         const ticketData = faturamentoChart.datasets[1].data;
@@ -1122,19 +1122,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const avgTicket = ticketData.reduce((a, b) => a + b, 0) / ticketData.length;
           const elTicketValor = document.getElementById('ticketMedioValor');
           const elTicketDelta = document.getElementById('ticketMedioDeltaMes');
-          
+
           if (elTicketValor && elTicketDelta) {
-             elTicketValor.textContent = formatCurrency(avgTicket);
-             
-             if (ticketData.length >= 2) {
-               const last = ticketData[ticketData.length - 1];
-               const prev = ticketData[ticketData.length - 2];
-               const varTicket = prev ? ((last - prev) / prev) * 100 : 0;
-               const tIsPos = varTicket >= 0;
-               const tSign = tIsPos ? '+' : '';
-               const tColor = tIsPos ? '#7a8b6e' : '#ca6853';
-               elTicketDelta.innerHTML = `<span style="color: ${tColor}; font-weight: 600;">${tSign}${varTicket.toFixed(1).replace('.', ',')}%</span> vs mês anterior`;
-             }
+            elTicketValor.textContent = formatCurrency(avgTicket);
+
+            if (ticketData.length >= 2) {
+              const last = ticketData[ticketData.length - 1];
+              const prev = ticketData[ticketData.length - 2];
+              const varTicket = prev ? ((last - prev) / prev) * 100 : 0;
+              const tIsPos = varTicket >= 0;
+              const tSign = tIsPos ? '+' : '';
+              const tColor = tIsPos ? '#7a8b6e' : '#ca6853';
+              elTicketDelta.innerHTML = `<span style="color: ${tColor}; font-weight: 600;">${tSign}${varTicket.toFixed(1).replace('.', ',')}%</span> vs mês anterior`;
+            }
           }
         }
       }
@@ -1165,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderKPIsError();
       return;
     }
-    
+
     // Faturamento Mensal
     const fatContent = document.getElementById('kpi-content-faturamento');
     if (fatContent && kpis.faturamento_mensal) {
@@ -1175,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const deltaColor = isPositive ? '#7a8b6e' : '#ca6853';
       const deltaSign = isPositive ? '+' : '';
       const varText = typeof variacao === 'number' ? variacao.toFixed(1).replace('.', ',') : variacao;
-      
+
       fatContent.innerHTML = `
         <div style="display: flex; align-items: baseline;">
           <span class="text-kpi">${formatCurrency(valor)}</span>
@@ -1206,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="text-kpi counter" data-target="${docs}">${docs}</span>
         <p class="text-body" style="margin-top: 0.5rem;">documentos na base</p>
       `;
-      
+
       // Animate the counter
       const counterEl = docsContent.querySelector('.counter');
       if (counterEl) animateCounter(counterEl, docs);
@@ -1220,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <p class="text-body" style="margin-top: 0.5rem;">--</p>
     `;
-    
+
     const fatContent = document.getElementById('kpi-content-faturamento');
     if (fatContent) fatContent.innerHTML = defaultHtml;
 
@@ -1254,9 +1254,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initWebSocket() {
     const wsUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'ws://163.176.80.201:8000/ws/charts'
-  : 'wss://workcafeagent.duckdns.org/ws/charts';
-const ws = new WebSocket(wsUrl);
+      ? 'ws://163.176.80.201:8000/ws/charts'
+      : 'wss://workcafeagent.duckdns.org/ws/charts';
+
+    const ws = new WebSocket(wsUrl);
+
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -1269,17 +1271,25 @@ const ws = new WebSocket(wsUrl);
           const docsHeader = headers.find(el => el.textContent.includes('Docs Indexados'));
           if (docsHeader) {
             const docsKpi = docsHeader.parentElement.nextElementSibling.querySelector('.counter');
-            if (docsKpi) {
-              animateCounter(docsKpi, data.total_chunks);
-            }
+            if (docsKpi) animateCounter(docsKpi, data.total_chunks);
           }
         }
       } catch (err) {
         console.error('Error parsing WS message:', err);
       }
     };
+
+    ws.onclose = () => {
+      console.warn('[WS] Connection closed, reconnecting in 3s...');
+      setTimeout(initWebSocket, 3000);
+    };
+
+    ws.onerror = (err) => {
+      console.error('[WS] Error:', err);
+      ws.close();
+    };
   }
-  
+
   fetchInitialChartsData();
   initWebSocket();
   fetchKPIsData();
@@ -1295,7 +1305,7 @@ const ws = new WebSocket(wsUrl);
     let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
     formatted = formatted.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
-    
+
     const lines = formatted.split('\n');
     let html = '';
     let inList = false;
@@ -1303,7 +1313,7 @@ const ws = new WebSocket(wsUrl);
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
+
       const ulMatch = line.match(/^[-*]\s+(.*)/);
       const olMatch = line.match(/^\d+\.\s+(.*)/);
 
@@ -1323,19 +1333,19 @@ const ws = new WebSocket(wsUrl);
         html += `<li>${olMatch[1]}</li>`;
       } else {
         const justClosedList = inList;
-        if (inList) { 
-          html += listType === 'ul' ? '</ul>' : '</ol>'; 
-          inList = false; 
+        if (inList) {
+          html += listType === 'ul' ? '</ul>' : '</ol>';
+          inList = false;
         }
-        
+
         if (i > 0 && !justClosedList) {
-           html += '<br>';
+          html += '<br>';
         }
         html += line;
       }
     }
     if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; }
-    
+
     return html;
   }
 
@@ -1472,9 +1482,9 @@ const ws = new WebSocket(wsUrl);
     try {
       const res = await fetch(`${API_BASE}/documents`);
       const data = await res.json();
-      
+
       docList.innerHTML = '';
-      
+
       data.documents.forEach(doc => {
         let iconName = 'file';
         if (doc.name.endsWith('.pdf')) iconName = 'file-text';
@@ -1543,7 +1553,7 @@ const ws = new WebSocket(wsUrl);
     async function handleUpload(file) {
       const originalHtml = uploadArea.innerHTML;
       uploadArea.style.pointerEvents = 'none';
-      
+
       uploadArea.innerHTML = `
         <i data-lucide="loader" class="pulse-anim" style="width: 48px; height: 48px; color: var(--color-terracotta); margin-bottom: 1rem;"></i>
         <h3 class="text-card-title pulse-anim">Enviando...</h3>

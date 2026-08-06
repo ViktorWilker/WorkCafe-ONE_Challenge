@@ -1,6 +1,6 @@
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://163.176.80.201:8000'
-  : '/api';
+  : 'https://workcafeagent.duckdns.org';
 
 var chartsData = null;
 document.addEventListener('DOMContentLoaded', () => {
@@ -1039,7 +1039,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initWebSocket() {
-    const ws = new WebSocket(`ws://163.176.80.201:8000/ws/charts`);
+    const wsUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'ws://163.176.80.201:8000/ws/charts'
+  : 'wss://workcafeagent.duckdns.org/ws/charts';
+const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);

@@ -65,7 +65,7 @@ def chart_vendas_por_mes() -> dict:
     data = fetch_category("financeiro", limit=60)
     return ask_llm_for_chart(
         data=data,
-        instruction="Identifique dados de faturamento ou receita por mês. Se houver múltiplas fontes de dados de vendas mensais, priorize os dados mais completos e recentes. Monte um gráfico de linha com os valores mensais em ordem cronológica. Labels devem ser os meses (jan, fev, mar...). Valores em reais.",
+        instruction="Identifique dados de faturamento ou receita por mês. IMPORTANTE: se houver múltiplas fontes, use EXCLUSIVAMENTE os dados do arquivo 'vendas_mensais_atualizado' ignorando qualquer outro. Monte um gráfico de linha com os valores mensais em ordem cronológica. Labels devem ser os meses (jan, fev, mar...). Valores em reais.",
         chart_id="vendas_por_mes",
         chart_type="line",
         title="Faturamento Mensal"

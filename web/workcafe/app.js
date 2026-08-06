@@ -1,6 +1,6 @@
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://163.176.80.201:8000'
-  : 'http://163.176.80.201:8000';
+  : '/api';
 
 var chartsData = null;
 document.addEventListener('DOMContentLoaded', () => {

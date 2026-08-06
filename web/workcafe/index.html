@@ -7,6 +7,7 @@
   <title>WorkCafe - Internal AI Agent</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
   <script>
     if (localStorage.getItem('workcafe-theme') === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -114,8 +115,8 @@
                 <div>
                   <h3 class="text-card-title pane-title">Faturamento Total (Ano)</h3>
                   <div style="margin-top: 1rem;">
-                    <span class="text-kpi" style="font-size: 2.5rem;">R$ 2.4M</span>
-                    <span class="delta" style="margin-left: 0.75rem;">+12.4% vs ano anterior</span>
+                    <span class="text-kpi" style="font-size: 2.5rem;" id="faturamentoTotalAno">R$ --</span>
+                    <span class="delta" style="margin-left: 0.75rem;" id="faturamentoDeltaAno">--</span>
                   </div>
                 </div>
 
@@ -123,11 +124,8 @@
                 <div>
                   <h3 class="text-card-title pane-title">Ticket Médio</h3>
                   <div style="margin-top: 1rem;">
-                    <span class="text-kpi" style="font-size: 2.5rem;">R$ 42,50</span>
-                    <span class="delta" style="margin-left: 0.75rem;">+5.4% vs mês anterior</span>
-                  </div>
-                  <div style="height: 60px; margin-top: 1.5rem;">
-                    <canvas id="miniSparkline" style="width: 100%; height: 100%;"></canvas>
+                    <span class="text-kpi" style="font-size: 2.5rem;" id="ticketMedioValor">R$ --</span>
+                    <span class="delta" style="margin-left: 0.75rem;" id="ticketMedioDeltaMes">--</span>
                   </div>
                 </div>
               </div>
@@ -138,7 +136,7 @@
           <div class="dash-pane" id="pane-margem">
             <div class="pane-split">
               <div class="pane-split-left" style="flex: 1.5;">
-                <h3 class="text-card-title pane-title">Margem Bruta vs Líquida por Categoria</h3>
+                <h3 class="text-card-title pane-title">Top 10 Produtos por Margem Bruta (%)</h3>
                 <div class="pane-content">
                   <canvas id="barChartMargem" style="width: 100%; height: 100%;"></canvas>
                 </div>
@@ -166,33 +164,32 @@
               </div>
               <div class="pane-split-right">
                 <h3 class="text-card-title pane-title">Abaixo do Mínimo</h3>
-                <ul class="alert-list">
-                  <li class="alert-item">
-                    <span class="alert-dot"></span>
-                    <div class="alert-info">
-                      <span class="alert-name">Leite Aveia</span>
-                      <span class="alert-desc">Atual: 15% | Mín: 20%</span>
-                    </div>
-                  </li>
-                  <li class="alert-item">
-                    <span class="alert-dot"></span>
-                    <div class="alert-info">
-                      <span class="alert-name">Copo Descartável M</span>
-                      <span class="alert-desc">Atual: 5% | Mín: 15%</span>
-                    </div>
-                  </li>
+                <ul class="alert-list" id="estoqueAlertList">
                 </ul>
               </div>
             </div>
           </div>
 
           <!-- Fornecedores -->
-          <div class="dash-pane" id="pane-fornecedores">
-            <div class="node-graph-placeholder">
-              <i data-lucide="network" class="node-icon"></i>
-              <h3 class="text-card-title">Rede de Fornecedores</h3>
-              <p class="text-body text-center" style="margin-bottom: 1.5rem;">Visualização interativa em breve</p>
-              <button class="btn btn--terracotta" disabled style="opacity: 0.5; cursor: not-allowed;">Ver Rede</button>
+          <div class="dash-pane" id="pane-fornecedores" style="padding: 1.5rem 2rem; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 class="text-card-title pane-title" style="margin-bottom: 0;">Rede de Fornecedores</h3>
+              <p class="text-body" id="fornecedoresResumo" style="font-weight: 500;"></p>
+            </div>
+            
+            <div style="background-color: var(--color-white); border-radius: var(--radius-xl); border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-sm);">
+              <table style="width: 100%; border-collapse: collapse; text-align: left;" id="fornecedoresTable">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--border-light); background-color: rgba(38, 38, 36, 0.02);">
+                    <th style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif; font-weight: 600; color: var(--color-stone-600); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Fornecedor</th>
+                    <th style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif; font-weight: 600; color: var(--color-stone-600); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Categorias Atendidas</th>
+                    <th style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif; font-weight: 600; color: var(--color-stone-600); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">Nº de Categorias</th>
+                  </tr>
+                </thead>
+                <tbody id="fornecedoresTableBody">
+                  <!-- filled by JS -->
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -235,10 +232,9 @@
               </div>
             </div>
 
-            <div class="corr-middle">
-              <div class="corr-chart-container" id="corrChartA"></div>
-              <div class="corr-divider"></div>
-              <div class="corr-chart-container" id="corrChartB"></div>
+            <div class="corr-middle" style="display: flex; gap: 24px; width: 100%;">
+              <div class="corr-chart-container" id="corrChartA" style="width: 50%; min-width: 0; height: 280px; overflow: hidden;"></div>
+              <div class="corr-chart-container" id="corrChartB" style="width: 50%; min-width: 0; height: 280px; overflow: hidden;"></div>
             </div>
 
             <div class="corr-bottom">

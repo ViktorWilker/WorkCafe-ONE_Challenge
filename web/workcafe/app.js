@@ -179,8 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    let data = [180, 195, 210, 205, 240, 261, 255, 270, 290, 310, 305, 330];
-    let labels = ['Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'];
+    let data = [];
+    let labels = [];
 
     if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
       const cData = chartsData.charts.find(c => c.id === 'vendas_por_mes');
@@ -322,30 +322,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const { ctx, width, height } = canvasInfo;
     const colors = getColors();
 
-    const padding = { top: 40, right: 40, bottom: 20, left: 120 };
+    const padding = { top: 40, right: 40, bottom: 20, left: 160 };
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    let data = [
-      { label: 'Cafés Especiais', bruta: 75, liquida: 55 },
-      { label: 'Bebidas Geladas', bruta: 65, liquida: 45 },
-      { label: 'Panificação', bruta: 50, liquida: 30 }
-    ];
+    let data = [];
 
     if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
       const cData = chartsData.charts.find(c => c.id === 'margem_por_produto');
       if (cData && cData.datasets && cData.datasets.length > 0) {
         data = cData.labels.map((lbl, idx) => ({
           label: lbl,
-          bruta: cData.datasets[0].data[idx] || 0,
-          liquida: (cData.datasets[1] ? cData.datasets[1].data[idx] : 0) || 0
+          bruta: cData.datasets[0].data[idx] || 0
         }));
       }
     }
     
-    const barH = 20;
-    const groupH = barH * 2 + 8;
-    const spacing = (chartH - (data.length * groupH)) / (data.length + 1);
+    let barH = (chartH * 0.7) / data.length;
+    if (barH > 24) barH = 24;
+    if (barH < 6) barH = 6;
+    let groupH = barH;
+    let spacing = (chartH - (data.length * groupH)) / (data.length + 1);
 
     animate(canvasId, 800, (progress) => {
       ctx.clearRect(0, 0, width, height);
@@ -357,16 +354,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.textBaseline = 'middle';
       
       // Margem Bruta
-      ctx.fillStyle = colors.terracotta;
+      ctx.fillStyle = '#e8a87c';
       ctx.fillRect(padding.left, 10, 12, 12);
       ctx.fillStyle = colors.stone900;
       ctx.fillText('Margem Bruta', padding.left + 20, 16);
-      
-      // Margem Líquida
-      ctx.fillStyle = colors.stone500;
-      ctx.fillRect(padding.left + 120, 10, 12, 12);
-      ctx.fillStyle = colors.stone900;
-      ctx.fillText('Margem Líquida', padding.left + 140, 16);
 
       data.forEach((item, i) => {
         const y = padding.top + spacing + i * (groupH + spacing);
@@ -376,35 +367,39 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.font = '13px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(item.label, padding.left - 15, y + groupH/2);
+        
+        let displayLabel = item.label;
+        if (displayLabel.length > 25) {
+            displayLabel = displayLabel.substring(0, 22) + '...';
+        }
+        ctx.fillText(displayLabel, padding.left - 15, y + groupH/2);
 
         // Bruta Bar
         const wBruta = chartW * (item.bruta / 100) * progress;
-        ctx.fillStyle = colors.terracotta;
+        ctx.fillStyle = '#e8a87c';
         ctx.beginPath();
         ctx.roundRect(padding.left, y, wBruta, barH, barH/2);
         ctx.fill();
 
-        // Liquida Bar
-        const wLiquida = chartW * (item.liquida / 100) * progress;
-        ctx.fillStyle = colors.stone500;
-        ctx.beginPath();
-        ctx.roundRect(padding.left, y + barH + 4, wLiquida, barH, barH/2);
-        ctx.fill();
-        
         if (progress > 0.8) {
           ctx.fillStyle = colors.stone900;
           ctx.textAlign = 'left';
-          ctx.fillText(item.bruta + '%', padding.left + wBruta + 10, y + barH/2);
-          ctx.fillText(item.liquida + '%', padding.left + wLiquida + 10, y + barH + 4 + barH/2);
+          const valStr = typeof item.bruta === 'number' ? item.bruta.toFixed(1).replace('.', ',') : item.bruta;
+          ctx.fillText(valStr + '%', padding.left + wBruta + 10, y + barH/2);
         }
       });
     });
   }
 
   function drawDonutChartContrib(canvasId = 'donutChartContrib', legendId = 'donutLegendContrib') {
-    const canvas = document.getElementById(canvasId);
+    let canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    
+    // Remove old event listeners
+    const newCanvas = canvas.cloneNode(true);
+    canvas.parentNode.replaceChild(newCanvas, canvas);
+    canvas = newCanvas;
+    
     const ctx = canvas.getContext('2d');
     const colors = getColors();
     
@@ -421,11 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
 
-    let data = [
-      { label: 'Cafés Especiais', value: 55, color: colors.terracotta },
-      { label: 'Bebidas Geladas', value: 25, color: colors.stone500 },
-      { label: 'Panificação', value: 20, color: colors.amber }
-    ];
+    let data = [];
 
     if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
       const cData = chartsData.charts.find(c => c.id === 'margem_por_produto');
@@ -453,12 +444,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${d.color};"></div>
             <span class="text-body">${d.label}</span>
           </div>
-          <span class="text-body" style="font-weight: 600;">${d.value}%</span>
+          <span class="text-body" style="font-weight: 600;">${typeof d.value === 'number' ? d.value.toFixed(1).replace('.', ',') : d.value}%</span>
         </div>
       `).join('');
     }
 
-    animate(canvasId, 800, (progress) => {
+    let hoveredIndex = -1;
+
+    function renderDonut(progress) {
       ctx.clearRect(0, 0, width, height);
       
       let startAngle = -0.5 * Math.PI;
@@ -473,24 +466,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.beginPath();
         ctx.fillStyle = data[i].color;
-        ctx.arc(cx, cy, outerR, startAngle, endAngle);
-        ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
+        
+        if (progress === 1 && i === hoveredIndex) {
+          ctx.arc(cx, cy, outerR + 5, startAngle, endAngle);
+          ctx.arc(cx, cy, innerR - 5, endAngle, startAngle, true);
+        } else {
+          ctx.arc(cx, cy, outerR, startAngle, endAngle);
+          ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
+        }
         ctx.fill();
 
         startAngle += sliceAngle;
       }
       
       // Center Text
-      ctx.fillStyle = colors.stone900;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = 'bold 32px "Instrument Sans", sans-serif';
-      ctx.fillText('100%', cx, cy - 10);
-      
-      ctx.fillStyle = colors.stone500;
-      ctx.font = '14px "Instrument Sans", sans-serif';
-      ctx.fillText('Total', cx, cy + 20);
+      if (progress === 1 && hoveredIndex >= 0 && hoveredIndex < data.length) {
+        const item = data[hoveredIndex];
+        const valText = typeof item.value === 'number' ? item.value.toFixed(1).replace('.', ',') + '%' : item.value + '%';
+        
+        ctx.fillStyle = colors.stone900;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        let displayLabel = item.label;
+        if (displayLabel.length > 15) {
+            displayLabel = displayLabel.substring(0, 12) + '...';
+        }
+        
+        ctx.font = 'bold 24px "Instrument Sans", sans-serif';
+        ctx.fillText(valText, cx, cy - 10);
+        
+        ctx.fillStyle = colors.stone500;
+        ctx.font = '12px "Instrument Sans", sans-serif';
+        ctx.fillText(displayLabel, cx, cy + 18);
+      }
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const cr = canvas.getBoundingClientRect();
+      const mx = e.clientX - cr.left;
+      const my = e.clientY - cr.top;
+      const cssCx = cr.width / 2;
+      const cssCy = cr.height / 2;
+      const dx = mx - cssCx;
+      const dy = my - cssCy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const scaledDist = cr.width > 0 ? dist * (300 / cr.width) : 0;
+
+      if (scaledDist >= (innerR - 5) && scaledDist <= (outerR + 5)) {
+        let angle = Math.atan2(dy, dx);
+        let normalizedAngle = angle + 0.5 * Math.PI;
+        if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
+        
+        let currentAngle = 0;
+        let newHoveredIndex = -1;
+        for (let i = 0; i < data.length; i++) {
+          const sliceAngle = (data[i].value / total) * Math.PI * 2;
+          if (normalizedAngle >= currentAngle && normalizedAngle < currentAngle + sliceAngle) {
+            newHoveredIndex = i;
+            break;
+          }
+          currentAngle += sliceAngle;
+        }
+        
+        if (hoveredIndex !== newHoveredIndex) {
+          hoveredIndex = newHoveredIndex;
+          renderDonut(1);
+        }
+      } else {
+        if (hoveredIndex !== -1) {
+          hoveredIndex = -1;
+          renderDonut(1);
+        }
+      }
     });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (hoveredIndex !== -1) {
+        hoveredIndex = -1;
+        renderDonut(1);
+      }
+    });
+
+    animate(canvasId, 800, renderDonut);
   }
 
   function drawBarChartEstoque(canvasId = 'barChartEstoque') {
@@ -499,17 +557,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const { ctx, width, height } = canvasInfo;
     const colors = getColors();
 
-    const padding = { top: 40, right: 20, bottom: 20, left: 120 };
+    const padding = { top: 40, right: 40, bottom: 20, left: 160 };
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
 
-    let data = [
-      { label: 'Leite Aveia', atual: 15, min: 20 },
-      { label: 'Copo M', atual: 5, min: 15 },
-      { label: 'Grão Especial', atual: 45, min: 30 },
-      { label: 'Açúcar Org.', atual: 80, min: 40 },
-      { label: 'Xarope Baunilha', atual: 22, min: 20 }
-    ];
+    let data = [];
 
     if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
       const cData = chartsData.charts.find(c => c.id === 'estoque_vs_minimo');
@@ -521,10 +573,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
       }
     }
+    
+    if (canvasId === 'barChartEstoque') {
+      const alertList = document.getElementById('estoqueAlertList');
+      if (alertList) {
+        const criticos = data.filter(d => d.atual < d.min);
+        if (criticos.length > 0) {
+          alertList.innerHTML = criticos.map(d => `
+            <li class="alert-item">
+              <span class="alert-dot"></span>
+              <div class="alert-info">
+                <span class="alert-name">${d.label}</span>
+                <span class="alert-desc">Atual: ${typeof d.atual === 'number' ? d.atual.toString().replace('.', ',') : d.atual} | Mín: ${typeof d.min === 'number' ? d.min.toString().replace('.', ',') : d.min}</span>
+              </div>
+            </li>
+          `).join('');
+        } else {
+          alertList.innerHTML = `
+            <li class="alert-item" style="display: block; text-align: center; color: var(--color-stone-500); padding-top: 1rem;">
+              <span class="alert-desc" style="font-size: 0.95rem; font-style: italic;">Nenhum item crítico no momento</span>
+            </li>
+          `;
+        }
+      }
+    }
 
-    const barH = 12;
-    const groupH = barH * 2 + 4;
-    const spacing = (chartH - (data.length * groupH)) / (data.length + 1);
+    let maxVal = 100;
+    if (data.length > 0) {
+      maxVal = Math.max(...data.flatMap(d => [d.atual, d.min]));
+      maxVal = maxVal > 0 ? maxVal * 1.15 : 100;
+    }
+
+    let groupH = (chartH * 0.75) / data.length;
+    if (groupH > 28) groupH = 28;
+    let barH = (groupH - 2) / 2;
+    if (barH < 4) barH = 4;
+    groupH = barH * 2 + 2;
+    
+    let spacing = (chartH - (data.length * groupH)) / (data.length + 1);
 
     animate(canvasId, 800, (progress) => {
       ctx.clearRect(0, 0, width, height);
@@ -554,21 +640,38 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.font = '13px "Instrument Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText(item.label, padding.left - 15, y + groupH/2);
+        
+        let displayLabel = item.label;
+        if (displayLabel.length > 25) {
+            displayLabel = displayLabel.substring(0, 22) + '...';
+        }
+        ctx.fillText(displayLabel, padding.left - 15, y + groupH/2);
 
         // Mínimo Bar
-        const minW = chartW * (item.min / 100) * progress;
+        const minW = chartW * (item.min / maxVal) * progress;
         ctx.fillStyle = colors.stone500;
         ctx.beginPath();
-        ctx.roundRect(padding.left, y + barH + 4, minW, barH, barH/2);
+        ctx.roundRect(padding.left, y + barH + 2, minW, barH, barH/2);
         ctx.fill();
 
         // Atual Bar
-        const atualW = chartW * (item.atual / 100) * progress;
+        const atualW = chartW * (item.atual / maxVal) * progress;
         ctx.fillStyle = colors.terracotta;
         ctx.beginPath();
         ctx.roundRect(padding.left, y, atualW, barH, barH/2);
         ctx.fill();
+        
+        if (progress > 0.8) {
+          ctx.fillStyle = colors.stone900;
+          ctx.textAlign = 'left';
+          ctx.font = '11px "Instrument Sans", sans-serif';
+          
+          const valAtual = typeof item.atual === 'number' ? item.atual.toFixed(1).replace('.0', '').replace('.', ',') : item.atual;
+          const valMin = typeof item.min === 'number' ? item.min.toFixed(1).replace('.0', '').replace('.', ',') : item.min;
+          
+          ctx.fillText(valAtual, padding.left + atualW + 6, y + barH/2);
+          ctx.fillText(valMin, padding.left + minW + 6, y + barH + 2 + barH/2);
+        }
       });
     });
   }
@@ -680,18 +783,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (type === 'fornecedores') {
       return `
-        <div class="node-graph-placeholder" style="width:100%; height:100%;">
-          <i data-lucide="network" class="node-icon"></i>
-          <p class="text-body text-center">Visualização interativa em breve</p>
+        <div style="width: 100%; height: 100%; overflow: auto; padding-right: 8px;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <tbody id="corrFornTableBody${side}"></tbody>
+          </table>
         </div>
       `;
     }
     
     if (type === 'basedocs') {
       return `
-        <div class="donut-layout" style="gap: 1.5rem; width:100%; height:100%;">
-          <div class="donut-canvas-container" style="width: 200px; height: 200px;">
-            <canvas id="${canvasId}" width="200" height="200"></canvas>
+        <div class="donut-layout" style="gap: 1.5rem; width:100%; height:100%; justify-content: center; align-items: center;">
+          <div class="donut-canvas-container" style="flex-shrink: 0; width: 200px; height: 200px;">
+            <canvas id="${canvasId}" style="width: 100%; height: 100%;"></canvas>
           </div>
           <div id="${legendId}" class="donut-legend"></div>
         </div>
@@ -709,6 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'margem': drawStackedBarChartMargem(canvasId); break;
       case 'estoque': drawBarChartEstoque(canvasId); break;
       case 'basedocs': drawDonutChartDocs(canvasId, legendId); break;
+      case 'fornecedores': drawFornecedoresTable(side); break;
     }
     if (window.lucide) {
       window.lucide.createIcons();
@@ -851,6 +956,80 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function drawFornecedoresTable(side = '') {
+    const tbodyId = side ? `corrFornTableBody${side}` : 'fornecedoresTableBody';
+    const resumoId = side ? `corrFornResumo${side}` : 'fornecedoresResumo';
+    const tbody = document.getElementById(tbodyId);
+    const resumo = document.getElementById(resumoId);
+    
+    if (!tbody) return;
+
+    let nodes = [];
+    let edges = [];
+
+    if (typeof chartsData !== 'undefined' && chartsData && chartsData.charts) {
+      const cData = chartsData.charts.find(c => c.id === 'rede_fornecedores');
+      if (cData) {
+        let n = cData.nodes;
+        let e = cData.edges;
+        if (!n && cData.datasets && cData.datasets.length > 0) {
+            n = cData.datasets[0].nodes || (cData.datasets[0].data && cData.datasets[0].data.nodes);
+            e = cData.datasets[0].edges || (cData.datasets[0].data && cData.datasets[0].data.edges);
+        }
+        
+        if (n && e) {
+          nodes = JSON.parse(JSON.stringify(n));
+          edges = JSON.parse(JSON.stringify(e));
+        }
+      }
+    }
+
+    if (nodes.length === 0) {
+       tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 2rem; color: var(--color-stone-500); font-style: italic;">Nenhum dado de fornecedor disponível.</td></tr>';
+       resumo.textContent = "0 fornecedores · 0 categorias";
+       return;
+    }
+
+    const fornNodes = nodes.filter(n => n.type === 'fornecedor');
+    const catNodes = nodes.filter(n => n.type === 'categoria');
+    
+    if (resumo) {
+      resumo.textContent = `${fornNodes.length} fornecedores · ${catNodes.length} categorias`;
+    }
+
+    const fornMap = {};
+    fornNodes.forEach(f => {
+       fornMap[f.id] = { id: f.id, categorias: [] };
+    });
+
+    edges.forEach(e => {
+       const source = e.source.id || e.source;
+       const target = e.target.id || e.target;
+       if (fornMap[source]) {
+          fornMap[source].categorias.push(target);
+       }
+    });
+
+    const rows = Object.values(fornMap);
+    rows.sort((a, b) => b.categorias.length - a.categorias.length);
+
+    tbody.innerHTML = rows.map((row) => {
+       const pillsHTML = row.categorias.map(cat => 
+         `<span style="display: inline-block; background-color: rgba(107, 143, 113, 0.15); color: var(--color-stone-900); border: 1px solid rgba(107, 143, 113, 0.3); border-radius: 99px; padding: 4px 8px; font-size: 11px; margin-right: 6px; margin-bottom: 6px; white-space: normal; line-height: 1.2;">${cat}</span>`
+       ).join('');
+
+       return `
+         <tr style="border-bottom: 1px solid var(--border-light); transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='rgba(38, 38, 36, 0.03)'" onmouseout="this.style.backgroundColor='transparent'">
+           <td style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif; font-weight: 500; color: var(--color-stone-900);">${row.id}</td>
+           <td style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif;">
+             <div style="display: flex; flex-wrap: wrap; margin-bottom: -6px;">${pillsHTML || '<span style="color: var(--color-stone-400);">-</span>'}</div>
+           </td>
+           ${!side ? `<td style="padding: 1rem 1.5rem; font-family: 'Instrument Sans', sans-serif; font-weight: 600; color: var(--color-terracotta); text-align: center;">${row.categorias.length}</td>` : ''}
+         </tr>
+       `;
+    }).join('');
+  }
+
   function drawActiveChart() {
     switch(currentTab) {
       case 'faturamento': drawLineChart(); drawMiniSparkline(); break;
@@ -858,6 +1037,7 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'estoque': drawBarChartEstoque(); break;
       case 'basedocs': drawDonutChartDocs(); break;
       case 'correlacoes': drawCorrelacoes(); break;
+      case 'fornecedores': drawFornecedoresTable(); break;
     }
   }
 
@@ -911,18 +1091,52 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateKPIs() {
     if (!chartsData || !chartsData.charts) return;
 
-    // Rede de Fornecedores
-    const redeChart = chartsData.charts.find(c => c.id === 'rede_fornecedores');
-    if (redeChart && redeChart.nodes) {
-      let numFornecedores = 0;
-      let numCategorias = 0;
-      redeChart.nodes.forEach(n => {
-        if (n.type === 'fornecedor') numFornecedores++;
-        else if (n.type === 'categoria') numCategorias++;
-      });
-      const placeholderTitle = document.querySelector('#pane-fornecedores .text-card-title');
-      if (placeholderTitle) {
-        placeholderTitle.textContent = numFornecedores + ' fornecedores · ' + numCategorias + ' categorias';
+    // Faturamento KPIs
+    const faturamentoChart = chartsData.charts.find(c => c.id === 'vendas_por_mes');
+    if (faturamentoChart && faturamentoChart.datasets && faturamentoChart.datasets.length > 0) {
+      const faturamentoData = faturamentoChart.datasets[0].data;
+      const totalAno = faturamentoData.reduce((acc, val) => acc + val, 0);
+      
+      const elFaturamentoTotal = document.getElementById('faturamentoTotalAno');
+      const elFaturamentoDelta = document.getElementById('faturamentoDeltaAno');
+      
+      if (elFaturamentoTotal && elFaturamentoDelta) {
+        if (totalAno > 1000000) {
+          elFaturamentoTotal.textContent = `R$ ${(totalAno / 1000000).toFixed(1).replace('.', ',')}M`;
+        } else {
+          elFaturamentoTotal.textContent = formatCurrency(totalAno);
+        }
+        
+        const base = 2990093.64;
+        const varAno = ((totalAno - base) / base) * 100;
+        const isPos = varAno >= 0;
+        const sign = isPos ? '+' : '';
+        const color = isPos ? '#7a8b6e' : '#ca6853';
+        elFaturamentoDelta.innerHTML = `<span style="color: ${color}; font-weight: 600;">${sign}${varAno.toFixed(1).replace('.', ',')}%</span> vs ano anterior`;
+      }
+      
+      // Ticket Médio
+      if (faturamentoChart.datasets.length > 1) {
+        const ticketData = faturamentoChart.datasets[1].data;
+        if (ticketData && ticketData.length > 0) {
+          const avgTicket = ticketData.reduce((a, b) => a + b, 0) / ticketData.length;
+          const elTicketValor = document.getElementById('ticketMedioValor');
+          const elTicketDelta = document.getElementById('ticketMedioDeltaMes');
+          
+          if (elTicketValor && elTicketDelta) {
+             elTicketValor.textContent = formatCurrency(avgTicket);
+             
+             if (ticketData.length >= 2) {
+               const last = ticketData[ticketData.length - 1];
+               const prev = ticketData[ticketData.length - 2];
+               const varTicket = prev ? ((last - prev) / prev) * 100 : 0;
+               const tIsPos = varTicket >= 0;
+               const tSign = tIsPos ? '+' : '';
+               const tColor = tIsPos ? '#7a8b6e' : '#ca6853';
+               elTicketDelta.innerHTML = `<span style="color: ${tColor}; font-weight: 600;">${tSign}${varTicket.toFixed(1).replace('.', ',')}%</span> vs mês anterior`;
+             }
+          }
+        }
       }
     }
   }

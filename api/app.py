@@ -9,20 +9,19 @@ from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from agents.graph import build_graph, run_chat, run_ingest, run_correlate, set_broadcast_callback
-
 
 load_dotenv()
 
 sys.path.append(str(Path(__file__).parent.parent / "agents"))
 sys.path.append(str(Path(__file__).parent.parent / "ingestion"))
 
-from graph import build_graph, run_chat, run_ingest, set_broadcast_callback
-from chart_agent import build_charts_data
+from agents.graph import build_graph, run_chat, run_ingest, run_correlate, set_broadcast_callback
+from agents.chart_agent import build_charts_data
 from langgraph.checkpoint.memory import MemorySaver
 
 DOCS_DIR = Path(__file__).parent.parent / "docs"
 ALLOWED_EXTENSIONS = {".pdf", ".xlsx", ".csv"}
+BASE_DIR = Path(__file__).parent
 
 active_connections: list[WebSocket] = []
 graph = None
@@ -48,9 +47,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Cafe Agent API", lifespan=lifespan)
 
+origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -134,4 +135,4 @@ async def charts():
 async def health():
     return {"status": "ok"}
 
-app.mount("/app", StaticFiles(directory="web/workcafe", html=True), name="web")
+app.mount("/app", StaticFiles(directory=BASE_DIR / "web/workcafe", html=True), name="web")
